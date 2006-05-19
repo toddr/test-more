@@ -4,7 +4,7 @@ use 5.004;
 
 use strict 'vars';
 use vars qw($VERSION @ISA @EXPORT);
-$VERSION = '0.62';
+$VERSION = '0.63';
 $VERSION = eval $VERSION;    # make the alpha version come out as a number
 
 use Test::Builder::Module;
@@ -52,7 +52,7 @@ You must have a plan.
 
 =item B<ok>
 
-  ok( $foo eq $bar, $name );
+  ok( $foo eq $bar, $description );
   ok( $foo eq $bar );
 
 ok() is given an expression (in this case C<$foo eq $bar>).  If it's
@@ -64,10 +64,10 @@ keeps track of that for you).
   # This produces "ok 1 - Hell not yet frozen over" (or not ok)
   ok( get_temperature($hell) > 0, 'Hell not yet frozen over' );
 
-If you provide a $name, that will be printed along with the "ok/not
+If you provide a $description, that will be printed along with the "ok/not
 ok" to make it easier to find your test when if fails (just search for
-the name).  It also makes it easier for the next guy to understand
-what your test is for.  It's highly recommended you use test names.
+the description).  It also makes it easier for the next guy to understand
+what your test is for.  It's highly recommended you use test descriptions.
 
 All tests are run in scalar context.  So this:
 

@@ -28,11 +28,11 @@ if( $^O eq 'MacOS' ) {
 my $test_num = 1;
 # Utility testing functions.
 sub ok ($;$) {
-    my($test, $name) = @_;
+    my($test, $description) = @_;
     my $ok = '';
     $ok .= "not " unless $test;
     $ok .= "ok $test_num";
-    $ok .= " - $name" if defined $name;
+    $ok .= " - $description" if defined $description;
     $ok .= "\n";
     print $ok;
     $test_num++;
@@ -74,7 +74,7 @@ else {
 
 chdir 't';
 my $lib = File::Spec->catdir(qw(lib Test Simple sample_tests));
-while( my($test_name, $exit_codes) = each %Tests ) {
+while( my($test_description, $exit_codes) = each %Tests ) {
     my($exit_code) = $exit_codes->[$IsVMS ? 1 : 0];
 
     my $Perl = $^X;
@@ -88,18 +88,18 @@ while( my($test_name, $exit_codes) = each %Tests ) {
         $Perl .= q{ -"Mvmsish=hushed"};
     }
 
-    my $file = File::Spec->catfile($lib, $test_name);
+    my $file = File::Spec->catfile($lib, $test_description);
     my $wait_stat = system(qq{$Perl -"I../blib/lib" -"I../lib" -"I../t/lib" $file});
     my $actual_exit = exitstatus($wait_stat);
 
     if( $exit_code eq 'not zero' ) {
         My::Test::ok( $actual_exit != 0,
-                      "$test_name exited with $actual_exit ".
+                      "$test_description exited with $actual_exit ".
                       "(expected $exit_code)");
     }
     else {
         My::Test::ok( $actual_exit == $exit_code, 
-                      "$test_name exited with $actual_exit ".
+                      "$test_description exited with $actual_exit ".
                       "(expected $exit_code)");
     }
 }

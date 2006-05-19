@@ -22,7 +22,7 @@ my @Expected_Details;
 $Test->is_num( scalar $Test->summary(), 0,   'no tests yet, no summary' );
 push @Expected_Details, { 'ok'      => 1,
                           actual_ok => 1,
-                          name      => 'no tests yet, no summary',
+                          description      => 'no tests yet, no summary',
                           type      => '',
                           reason    => ''
                         };
@@ -42,7 +42,7 @@ SKIP: {
 }
 push @Expected_Details, { 'ok'      => 1,
                           actual_ok => 1,
-                          name      => '',
+                          description      => '',
                           type      => 'skip',
                           reason    => 'just testing skip',
                         };
@@ -53,7 +53,7 @@ TODO: {
 
     push @Expected_Details, { 'ok'       => 1,
                               actual_ok  => 0,
-                              name       => 'a test to todo!',
+                              description       => 'a test to todo!',
                               type       => 'todo',
                               reason     => 'i need a todo',
                             };
@@ -62,7 +62,7 @@ TODO: {
 }
 push @Expected_Details, { 'ok'      => 1,
                           actual_ok => 0,
-                          name      => '',
+                          description      => '',
                           type      => 'todo_skip',
                           reason    => 'i need both'
                         };
@@ -74,7 +74,7 @@ $Test->todo_output($todo_fh);
 $Test->is_num( scalar $Test->summary(), 4,   'summary' );
 push @Expected_Details, { 'ok'      => 1,
                           actual_ok => 1,
-                          name      => 'summary',
+                          description      => 'summary',
                           type      => '',
                           reason    => '',
                         };
@@ -83,7 +83,7 @@ $Test->current_test(6);
 print "ok 6 - current_test incremented\n";
 push @Expected_Details, { 'ok'      => 1,
                           actual_ok => undef,
-                          name      => undef,
+                          description      => undef,
                           type      => 'unknown',
                           reason    => 'incrementing test number',
                         };

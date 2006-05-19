@@ -1,3 +1,9 @@
+0.63  Fri May 19 16:38:49 CEST 2006
+      Patched to change 'name' to 'description' (not comment) 
+      Original patch from "Stevan Little" <stevan@iinteractive.com> 
+      Implemented by "Richard Foley" <richard.foley@rfi.net>
+      [rt.cpan.org 11400]
+
 0.62  Sat Oct  8 01:25:03 PDT 2005
     * Absorbed Test::Builder::Tester.  The last release broke it because its
       screen scraping Test::More and the failure output changed.  By

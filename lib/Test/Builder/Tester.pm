@@ -293,9 +293,9 @@ This takes name/value pairs that effect how the test is run.
 
 =over
 
-=item title (synonym 'name', 'label')
+=item title (synonym 'description', 'label')
 
-The name of the test that will be displayed after the C<ok> or C<not
+The description of the test that will be displayed after the C<ok> or C<not
 ok>.
 
 =item skip_out
@@ -313,7 +313,7 @@ declared with C<test_err>.
 =back
 
 As a convience, if only one argument is passed then this argument
-is assumed to be the name of the test (as in the above examples.)
+is assumed to be the description of the test (as in the above examples.)
 
 Once C<test_test> has been run test output will be redirected back to
 the original filehandles that B<Test::Builder> was connected to
@@ -332,7 +332,7 @@ sub test_test
    else
    {
      %args = @_;
-     $mess = $args{name} if exists($args{name});
+     $mess = $args{description} if exists($args{description});
      $mess = $args{title} if exists($args{title});
      $mess = $args{label} if exists($args{label});
    }

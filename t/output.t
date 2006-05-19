@@ -18,11 +18,11 @@ print "1..4\n";
 my $test_num = 1;
 # Utility testing functions.
 sub ok ($;$) {
-    my($test, $name) = @_;
+    my($test, $description) = @_;
     my $ok = '';
     $ok .= "not " unless $test;
     $ok .= "ok $test_num";
-    $ok .= " - $name" if defined $name;
+    $ok .= " - $description" if defined $description;
     $ok .= "\n";
     print $ok;
     $test_num++;
@@ -66,7 +66,7 @@ ok($lines[1] =~ /Hello!/);
 
 
 
-# Ensure stray newline in name escaping works.
+# Ensure stray newline in description escaping works.
 $out = tie *FAKEOUT, 'TieOut';
 $Test->output(\*FAKEOUT);
 $Test->exported_to(__PACKAGE__);

@@ -8,7 +8,7 @@ $^C ||= 0;
 
 use strict;
 use vars qw($VERSION);
-$VERSION = '0.32';
+$VERSION = '0.33';
 $VERSION = eval $VERSION;    # make the alpha version come out as a number
 
 # Make Test::Builder thread-safe for ithreads.
@@ -91,9 +91,9 @@ Test::Builder - Backend for building test libraries
   }
 
   sub ok {
-      my($test, $name) = @_;
+      my($test, $description) = @_;
 
-      $Test->ok($test, $name);
+      $Test->ok($test, $description);
   }
 
 
@@ -366,13 +366,13 @@ sub skip_all {
 These actually run the tests, analogous to the functions in
 Test::More.
 
-$name is always optional.
+$description is always optional.
 
 =over 4
 
 =item B<ok>
 
-  $Test->ok($test, $name);
+  $Test->ok($test, $description);
 
 Your basic test.  Pass if $test is true, fail if $test is false.  Just
 like Test::Simple's ok().
@@ -380,7 +380,7 @@ like Test::Simple's ok().
 =cut
 
 sub ok {
-    my($self, $test, $name) = @_;
+    my($self, $test, $description) = @_;
 
     # $test might contain an object which we don't want to accidentally
     # store, so we turn it into a boolean.
@@ -394,11 +394,11 @@ sub ok {
     lock $self->{Curr_Test};
     $self->{Curr_Test}++;
 
-    # In case $name is a string overloaded object, force it to stringify.
-    $self->_unoverload_str(\$name);
+    # In case $description is a string overloaded object, force it to stringify.
+    $self->_unoverload_str(\$description);
 
-    $self->diag(<<ERR) if defined $name and $name =~ /^[\d\s]+$/;
-    You named your test '$name'.  You shouldn't use numbers for your test names.
+    $self->diag(<<ERR) if defined $description and $description =~ /^[\d\s]+$/;
+    You described your test as '$description'.  You shouldn't use numbers for your test descriptions.
     Very confusing.
 ERR
 
@@ -421,13 +421,13 @@ ERR
     $out .= "ok";
     $out .= " $self->{Curr_Test}" if $self->use_numbers;
 
-    if( defined $name ) {
-        $name =~ s|#|\\#|g;     # # in a name can confuse Test::Harness.
-        $out   .= " - $name";
-        $result->{name} = $name;
+    if( defined $description ) {
+        $description =~ s|#|\\#|g;     # # in a description can confuse Test::Harness.
+        $out   .= " - $description";
+        $result->{description} = $description;
     }
     else {
-        $result->{name} = '';
+        $result->{description} = '';
     }
 
     if( $todo ) {
@@ -449,8 +449,8 @@ ERR
         my $msg = $todo ? "Failed (TODO)" : "Failed";
         $self->_print_diag("\n") if $ENV{HARNESS_ACTIVE};
 
-	if( defined $name ) {
-	    $self->diag(qq[  $msg test '$name'\n]);
+	if( defined $description ) {
+	    $self->diag(qq[  $msg test '$description'\n]);
 	    $self->diag(qq[  in $file at line $line.\n]);
 	}
 	else {
@@ -520,14 +520,14 @@ sub _is_dualvar {
 
 =item B<is_eq>
 
-  $Test->is_eq($got, $expected, $name);
+  $Test->is_eq($got, $expected, $description);
 
 Like Test::More's is().  Checks if $got eq $expected.  This is the
 string version.
 
 =item B<is_num>
 
-  $Test->is_num($got, $expected, $name);
+  $Test->is_num($got, $expected, $description);
 
 Like Test::More's is().  Checks if $got == $expected.  This is the
 numeric version.
@@ -535,7 +535,7 @@ numeric version.
 =cut
 
 sub is_eq {
-    my($self, $got, $expect, $name) = @_;
+    my($self, $got, $expect, $description) = @_;
     local $Level = $Level + 1;
 
     $self->_unoverload_str(\$got, \$expect);
@@ -544,16 +544,16 @@ sub is_eq {
         # undef only matches undef and nothing else
         my $test = !defined $got && !defined $expect;
 
-        $self->ok($test, $name);
+        $self->ok($test, $description);
         $self->_is_diag($got, 'eq', $expect) unless $test;
         return $test;
     }
 
-    return $self->cmp_ok($got, 'eq', $expect, $name);
+    return $self->cmp_ok($got, 'eq', $expect, $description);
 }
 
 sub is_num {
-    my($self, $got, $expect, $name) = @_;
+    my($self, $got, $expect, $description) = @_;
     local $Level = $Level + 1;
 
     $self->_unoverload_num(\$got, \$expect);
@@ -562,12 +562,12 @@ sub is_num {
         # undef only matches undef and nothing else
         my $test = !defined $got && !defined $expect;
 
-        $self->ok($test, $name);
+        $self->ok($test, $description);
         $self->_is_diag($got, '==', $expect) unless $test;
         return $test;
     }
 
-    return $self->cmp_ok($got, '==', $expect, $name);
+    return $self->cmp_ok($got, '==', $expect, $description);
 }
 
 sub _is_diag {
@@ -598,14 +598,14 @@ DIAGNOSTIC
 
 =item B<isnt_eq>
 
-  $Test->isnt_eq($got, $dont_expect, $name);
+  $Test->isnt_eq($got, $dont_expect, $description);
 
 Like Test::More's isnt().  Checks if $got ne $dont_expect.  This is
 the string version.
 
 =item B<isnt_num>
 
-  $Test->is_num($got, $dont_expect, $name);
+  $Test->is_num($got, $dont_expect, $description);
 
 Like Test::More's isnt().  Checks if $got ne $dont_expect.  This is
 the numeric version.
@@ -613,42 +613,42 @@ the numeric version.
 =cut
 
 sub isnt_eq {
-    my($self, $got, $dont_expect, $name) = @_;
+    my($self, $got, $dont_expect, $description) = @_;
     local $Level = $Level + 1;
 
     if( !defined $got || !defined $dont_expect ) {
         # undef only matches undef and nothing else
         my $test = defined $got || defined $dont_expect;
 
-        $self->ok($test, $name);
+        $self->ok($test, $description);
         $self->_cmp_diag($got, 'ne', $dont_expect) unless $test;
         return $test;
     }
 
-    return $self->cmp_ok($got, 'ne', $dont_expect, $name);
+    return $self->cmp_ok($got, 'ne', $dont_expect, $description);
 }
 
 sub isnt_num {
-    my($self, $got, $dont_expect, $name) = @_;
+    my($self, $got, $dont_expect, $description) = @_;
     local $Level = $Level + 1;
 
     if( !defined $got || !defined $dont_expect ) {
         # undef only matches undef and nothing else
         my $test = defined $got || defined $dont_expect;
 
-        $self->ok($test, $name);
+        $self->ok($test, $description);
         $self->_cmp_diag($got, '!=', $dont_expect) unless $test;
         return $test;
     }
 
-    return $self->cmp_ok($got, '!=', $dont_expect, $name);
+    return $self->cmp_ok($got, '!=', $dont_expect, $description);
 }
 
 
 =item B<like>
 
-  $Test->like($this, qr/$regex/, $name);
-  $Test->like($this, '/$regex/', $name);
+  $Test->like($this, qr/$regex/, $description);
+  $Test->like($this, '/$regex/', $description);
 
 Like Test::More's like().  Checks if $this matches the given $regex.
 
@@ -656,8 +656,8 @@ You'll want to avoid qr// if you want your tests to work before 5.005.
 
 =item B<unlike>
 
-  $Test->unlike($this, qr/$regex/, $name);
-  $Test->unlike($this, '/$regex/', $name);
+  $Test->unlike($this, qr/$regex/, $description);
+  $Test->unlike($this, '/$regex/', $description);
 
 Like Test::More's unlike().  Checks if $this B<does not match> the
 given $regex.
@@ -665,17 +665,17 @@ given $regex.
 =cut
 
 sub like {
-    my($self, $this, $regex, $name) = @_;
+    my($self, $this, $regex, $description) = @_;
 
     local $Level = $Level + 1;
-    $self->_regex_ok($this, $regex, '=~', $name);
+    $self->_regex_ok($this, $regex, '=~', $description);
 }
 
 sub unlike {
-    my($self, $this, $regex, $name) = @_;
+    my($self, $this, $regex, $description) = @_;
 
     local $Level = $Level + 1;
-    $self->_regex_ok($this, $regex, '!~', $name);
+    $self->_regex_ok($this, $regex, '!~', $description);
 }
 
 =item B<maybe_regex>
@@ -696,11 +696,11 @@ For example, a version of like(), sans the useful diagnostic messages,
 could be written as:
 
   sub laconic_like {
-      my ($self, $this, $regex, $name) = @_;
+      my ($self, $this, $regex, $description) = @_;
       my $usable_regex = $self->maybe_regex($regex);
       die "expecting regex, found '$regex'\n"
           unless $usable_regex;
-      $self->ok($this =~ m/$usable_regex/, $name);
+      $self->ok($this =~ m/$usable_regex/, $description);
   }
 
 =cut
@@ -730,12 +730,12 @@ sub maybe_regex {
 };
 
 sub _regex_ok {
-    my($self, $this, $regex, $cmp, $name) = @_;
+    my($self, $this, $regex, $cmp, $description) = @_;
 
     my $ok = 0;
     my $usable_regex = $self->maybe_regex($regex);
     unless (defined $usable_regex) {
-        $ok = $self->ok( 0, $name );
+        $ok = $self->ok( 0, $description );
         $self->diag("    '$regex' doesn't look much like a regex to me.");
         return $ok;
     }
@@ -754,7 +754,7 @@ $code" . q{$test = $this =~ /$usable_regex/ ? 1 : 0};
         $test = !$test if $cmp eq '!~';
 
         local $Level = $Level + 1;
-        $ok = $self->ok( $test, $name );
+        $ok = $self->ok( $test, $description );
     }
 
     unless( $ok ) {
@@ -772,7 +772,7 @@ DIAGNOSTIC
 
 =item B<cmp_ok>
 
-  $Test->cmp_ok($this, $type, $that, $name);
+  $Test->cmp_ok($this, $type, $that, $description);
 
 Works just like Test::More's cmp_ok().
 
@@ -785,7 +785,7 @@ my %numeric_cmps = map { ($_, 1) }
                        ("<",  "<=", ">",  ">=", "==", "!=", "<=>");
 
 sub cmp_ok {
-    my($self, $got, $type, $expect, $name) = @_;
+    my($self, $got, $type, $expect, $description) = @_;
 
     # Treat overloaded objects as numbers if we're asked to do a
     # numeric comparison.
@@ -809,7 +809,7 @@ $code" . "\$got $type \$expect;";
 
     }
     local $Level = $Level + 1;
-    my $ok = $self->ok($test, $name);
+    my $ok = $self->ok($test, $description);
 
     unless( $ok ) {
         if( $type =~ /^(eq|==)$/ ) {
@@ -900,7 +900,7 @@ sub skip {
     $self->{Test_Results}[$self->{Curr_Test}-1] = &share({
         'ok'      => 1,
         actual_ok => 1,
-        name      => '',
+        description      => '',
         type      => 'skip',
         reason    => $why,
     });
@@ -944,7 +944,7 @@ sub todo_skip {
     $self->{Test_Results}[$self->{Curr_Test}-1] = &share({
         'ok'      => 1,
         actual_ok => 0,
-        name      => '',
+        description      => '',
         type      => 'todo_skip',
         reason    => $why,
     });
@@ -1368,7 +1368,7 @@ sub current_test {
                     actual_ok => undef, 
                     reason    => 'incrementing test number', 
                     type      => 'unknown', 
-                    name      => undef 
+                    description      => undef 
                 });
             }
         }
@@ -1407,7 +1407,7 @@ Like summary(), but with a lot more detail.
     $tests[$test_num - 1] = 
             { 'ok'       => is the test considered a pass?
               actual_ok  => did it literally say 'ok'?
-              name       => name of the test (if any)
+              description       => description of the test (if any)
               type       => type of test (if any, see below).
               reason     => reason for the above (if any)
             };
@@ -1418,7 +1418,7 @@ Like summary(), but with a lot more detail.
 printed 'ok' or 'not ok'.  This is for examining the result of 'todo'
 tests.  
 
-'name' is the name of the test.
+'description' is the description of the test.
 
 'type' indicates if it was a special test.  Normal tests have a type
 of ''.  Type can be one of the following:
@@ -1432,7 +1432,7 @@ Sometimes the Test::Builder test counter is incremented without it
 printing any test output, for example, when current_test() is changed.
 In these cases, Test::Builder doesn't know the result of the test, so
 it's type is 'unkown'.  These details for these tests are filled in.
-They are considered ok, but the name and actual_ok is left undef.
+They are considered ok, but the description and actual_ok is left undef.
 
 For example "not ok 23 - hole count # TODO insufficient donuts" would
 result in this structure:
@@ -1440,7 +1440,7 @@ result in this structure:
     $tests[22] =    # 23 - 1, since arrays start from 0.
       { ok        => 1,   # logically, the test passed since it's todo
         actual_ok => 0,   # in absolute terms, it failed
-        name      => 'hole count',
+        description      => 'hole count',
         type      => 'todo',
         reason    => 'insufficient donuts'
       };

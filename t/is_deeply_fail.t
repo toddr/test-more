@@ -33,9 +33,9 @@ sub ok ($;$) {
 }
 
 sub is ($$;$) {
-    my($this, $that, $name) = @_;
+    my($this, $that, $description) = @_;
 
-    my $ok = $TB->is_eq($$this, $that, $name);
+    my $ok = $TB->is_eq($$this, $that, $description);
 
     $$this = '';
 
@@ -43,10 +43,10 @@ sub is ($$;$) {
 }
 
 sub like ($$;$) {
-    my($this, $regex, $name) = @_;
+    my($this, $regex, $description) = @_;
     $regex = "/$regex/" if !ref $regex and $regex !~ m{^/.*/$}s;
 
-    my $ok = $TB->like($$this, $regex, $name);
+    my $ok = $TB->like($$this, $regex, $description);
 
     $$this = '';
 

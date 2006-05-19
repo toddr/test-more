@@ -131,11 +131,11 @@ test_out("ok 1 - foo");
 # the actual test function that we are testing
 ok("1","foo");
 
-# test the name
-test_test(name => "bar");
+# test the description
+test_test(description => "bar");
 
 # check that passed
-my_test_test("meta test name");
+my_test_test("meta test description");
 
 ####################################################################
 
@@ -149,7 +149,7 @@ test_out("ok 1 - foo");
 # the actual test function that we are testing
 ok("1","foo");
 
-# test the name
+# test the description
 test_test(title => "bar");
 
 # check that passed
@@ -167,7 +167,7 @@ test_out("ok 1 - foo");
 # the actual test function that we are testing
 ok("1","foo");
 
-# test the name
+# test the description
 test_test(label => "bar");
 
 # check that passed
@@ -187,7 +187,7 @@ test_fail(+3);
 ok("0","foo");
 
 # test that we got what we expect, ignoring our is wrong
-test_test(skip_out => 1, name => "bar");
+test_test(skip_out => 1, description => "bar");
 
 # check that that passed
 my_test_test("meta test skip_out");
@@ -206,7 +206,7 @@ test_err("this is wrong");
 ok("0","foo");
 
 # test that we got what we expect, ignoring err is wrong
-test_test(skip_err => 1, name => "bar");
+test_test(skip_err => 1, description => "bar");
 
 # diagnostics failing out
 # check that that passed

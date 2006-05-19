@@ -34,7 +34,7 @@ $Test->failure_output(\*FAKEOUT);
 $Test->todo_output(\*FAKEOUT);
 $Test->no_plan();
 
-$Test->ok(1, "name\n");
+$Test->ok(1, "description\n");
 $Test->ok(0, "foo\nbar\nbaz");
 $Test->skip("\nmoofer");
 $Test->todo_skip("foo\n\n");

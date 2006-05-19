@@ -16,11 +16,11 @@ print "1..2\n";
 my $test_num = 1;
 # Utility testing functions.
 sub ok ($;$) {
-    my($test, $name) = @_;
+    my($test, $description) = @_;
     my $ok = '';
     $ok .= "not " unless $test;
     $ok .= "ok $test_num";
-    $ok .= " - $name" if defined $name;
+    $ok .= " - $description" if defined $description;
     $ok .= "\n";
     print $ok;
     $test_num++;

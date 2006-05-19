@@ -119,7 +119,7 @@ congratulations, you've written your first useful test.
 That output isn't terribly descriptive, is it?  When you have two
 tests you can figure out which one is #2, but what if you have 102?
 
-Each test can be given a little descriptive name as the second
+Each test can be given a little description as the second
 argument to C<ok()>.
 
     use Test::Simple tests => 2;
@@ -322,14 +322,14 @@ now we can just add tests and not have to do all sorts of math to
 figure out how many we're running.
 
 
-=head2 Informative names
+=head2 Informative descriptions
 
 Take a look at this line here
 
     ok( defined $ical,            "new(ical => '$ical_str')" );
 
 we've added more detail about what we're testing and the ICal string
-itself we're trying out to the name.  So you get results like:
+itself we're trying out to the description.  So you get results like:
 
     ok 25 - new(ical => '19971024T120000')
     ok 26 -   and it's the right class
@@ -342,7 +342,7 @@ itself we're trying out to the name.  So you get results like:
 
 if something in there fails, you'll know which one it was and that
 will make tracking down the problem easier.  So try to put a bit of
-debugging information into the test names.
+debugging information into the test descriptions.
 
 Describe what the tests test, to make debugging a failed test easier
 for you or for the next person who runs your test.

@@ -16,7 +16,7 @@ sub _carp {
 
 
 use vars qw($VERSION @ISA @EXPORT %EXPORT_TAGS $TODO);
-$VERSION = '0.62';
+$VERSION = '0.63';
 $VERSION = eval $VERSION;    # make the alpha version come out as a number
 
 use Test::Builder::Module;
@@ -51,40 +51,40 @@ Test::More - yet another framework for writing test scripts
   require_ok( 'Some::Module' );
 
   # Various ways to say "ok"
-  ok($this eq $that, $test_name);
+  ok($this eq $that, $test_description);
 
-  is  ($this, $that,    $test_name);
-  isnt($this, $that,    $test_name);
+  is  ($this, $that,    $test_description);
+  isnt($this, $that,    $test_description);
 
   # Rather than print STDERR "# here's what went wrong\n"
   diag("here's what went wrong");
 
-  like  ($this, qr/that/, $test_name);
-  unlike($this, qr/that/, $test_name);
+  like  ($this, qr/that/, $test_description);
+  unlike($this, qr/that/, $test_description);
 
-  cmp_ok($this, '==', $that, $test_name);
+  cmp_ok($this, '==', $that, $test_description);
 
-  is_deeply($complex_structure1, $complex_structure2, $test_name);
+  is_deeply($complex_structure1, $complex_structure2, $test_description);
 
   SKIP: {
       skip $why, $how_many unless $have_some_feature;
 
-      ok( foo(),       $test_name );
-      is( foo(42), 23, $test_name );
+      ok( foo(),       $test_description );
+      is( foo(42), 23, $test_description );
   };
 
   TODO: {
       local $TODO = $why;
 
-      ok( foo(),       $test_name );
-      is( foo(42), 23, $test_name );
+      ok( foo(),       $test_description );
+      is( foo(42), 23, $test_description );
   };
 
   can_ok($module, @methods);
   isa_ok($object, $class);
 
-  pass($test_name);
-  fail($test_name);
+  pass($test_description);
+  fail($test_description);
 
   BAIL_OUT($why);
 
@@ -188,11 +188,11 @@ sub import_extra {
 }
 
 
-=head2 Test names
+=head2 Test descriptions
 
 By convention, each test is assigned a number in order.  This is
 largely done automatically for you.  However, it's often very useful to
-assign a name to each test.  Which would you rather see:
+assign a description to each test.  Which would you rather see:
 
   ok 4
   not ok 5
@@ -208,7 +208,7 @@ The later gives you some idea of what failed.  It also makes it easier
 to find the test in your script, simply search for "simple
 exponential".
 
-All test functions take a name argument.  It's optional, but highly
+All test functions take a description argument.  It's optional, but highly
 suggested that you use it.
 
 
@@ -226,7 +226,7 @@ respectively.
 
 =item B<ok>
 
-  ok($this eq $that, $test_name);
+  ok($this eq $that, $test_description);
 
 This simply evaluates any expression (C<$this eq $that> is just a
 simple example) and uses that to determine if the test succeeded or
@@ -241,9 +241,9 @@ For example:
 
 (Mnemonic:  "This is ok.")
 
-$test_name is a very short description of the test that will be printed
+$test_description is a very short description of the test that will be printed
 out.  It makes it very easy to find a test in your script when it fails
-and gives others an idea of your intentions.  $test_name is optional,
+and gives others an idea of your intentions.  $test_description is optional,
 but we B<very> strongly encourage its use.
 
 Should an ok() fail, it will produce some diagnostics:
@@ -257,18 +257,18 @@ This is actually Test::Simple's ok() routine.
 =cut
 
 sub ok ($;$) {
-    my($test, $name) = @_;
+    my($test, $description) = @_;
     my $tb = Test::More->builder;
 
-    $tb->ok($test, $name);
+    $tb->ok($test, $description);
 }
 
 =item B<is>
 
 =item B<isnt>
 
-  is  ( $this, $that, $test_name );
-  isnt( $this, $that, $test_name );
+  is  ( $this, $that, $test_description );
+  isnt( $this, $that, $test_description );
 
 Similar to ok(), is() and isnt() compare their two arguments
 with C<eq> and C<ne> respectively and use the result of that to
@@ -288,7 +288,7 @@ are similar to these:
 (Mnemonic:  "This is that."  "This isn't that.")
 
 So why use these?  They produce better diagnostics on failure.  ok()
-cannot know what you are testing for (beyond the name), but is() and
+cannot know what you are testing for (beyond the description), but is() and
 isnt() know what the test was and why it failed.  For example this
 test:
 
@@ -340,7 +340,7 @@ sub isnt ($$;$) {
 
 =item B<like>
 
-  like( $this, qr/that/, $test_name );
+  like( $this, qr/that/, $test_description );
 
 Similar to ok(), like() matches $this against the regex C<qr/that/>.
 
@@ -377,7 +377,7 @@ sub like ($$;$) {
 
 =item B<unlike>
 
-  unlike( $this, qr/that/, $test_name );
+  unlike( $this, qr/that/, $test_description );
 
 Works exactly as like(), only it checks if $this B<does not> match the
 given pattern.
@@ -393,7 +393,7 @@ sub unlike ($$;$) {
 
 =item B<cmp_ok>
 
-  cmp_ok( $this, $op, $that, $test_name );
+  cmp_ok( $this, $op, $that, $test_description );
 
 Halfway between ok() and is() lies cmp_ok().  This allows you to
 compare two arguments using any binary perl operator.
@@ -478,11 +478,11 @@ sub can_ok ($@) {
         eval { $proto->can($method) } || push @nok, $method;
     }
 
-    my $name;
-    $name = @methods == 1 ? "$class->can('$methods[0]')" 
+    my $description;
+    $description = @methods == 1 ? "$class->can('$methods[0]')" 
                           : "$class->can(...)";
     
-    my $ok = $tb->ok( !@nok, $name );
+    my $ok = $tb->ok( !@nok, $description );
 
     $tb->diag(map "    $class->can('$_') failed\n", @nok);
 
@@ -491,8 +491,8 @@ sub can_ok ($@) {
 
 =item B<isa_ok>
 
-  isa_ok($object, $class, $object_name);
-  isa_ok($ref,    $type,  $ref_name);
+  isa_ok($object, $class, $object_description);
+  isa_ok($ref,    $type,  $ref_description);
 
 Checks to see if the given C<< $object->isa($class) >>.  Also checks to make
 sure the object was defined in the first place.  Handy for this sort
@@ -513,23 +513,23 @@ It works on references, too:
     isa_ok( $array_ref, 'ARRAY' );
 
 The diagnostics of this test normally just refer to 'the object'.  If
-you'd like them to be more specific, you can supply an $object_name
+you'd like them to be more specific, you can supply an $object_description
 (for example 'Test customer').
 
 =cut
 
 sub isa_ok ($$;$) {
-    my($object, $class, $obj_name) = @_;
+    my($object, $class, $obj_description) = @_;
     my $tb = Test::More->builder;
 
     my $diag;
-    $obj_name = 'The object' unless defined $obj_name;
-    my $name = "$obj_name isa $class";
+    $obj_description = 'The object' unless defined $obj_description;
+    my $description = "$obj_description isa $class";
     if( !defined $object ) {
-        $diag = "$obj_name isn't defined";
+        $diag = "$obj_description isn't defined";
     }
     elsif( !ref $object ) {
-        $diag = "$obj_name isn't a reference";
+        $diag = "$obj_description isn't a reference";
     }
     else {
         # We can't use UNIVERSAL::isa because we want to honor isa() overrides
@@ -539,7 +539,7 @@ sub isa_ok ($$;$) {
             if( $@ =~ /^Can't call method "isa" on unblessed reference/ ) {
                 if( !UNIVERSAL::isa($object, $class) ) {
                     my $ref = ref $object;
-                    $diag = "$obj_name isn't a '$class' it's a '$ref'";
+                    $diag = "$obj_description isn't a '$class' it's a '$ref'";
                 }
             } else {
                 die <<WHOA;
@@ -552,7 +552,7 @@ WHOA
         }
         elsif( !$rslt ) {
             my $ref = ref $object;
-            $diag = "$obj_name isn't a '$class' it's a '$ref'";
+            $diag = "$obj_description isn't a '$class' it's a '$ref'";
         }
     }
             
@@ -560,11 +560,11 @@ WHOA
 
     my $ok;
     if( $diag ) {
-        $ok = $tb->ok( 0, $name );
+        $ok = $tb->ok( 0, $description );
         $tb->diag("    $diag\n");
     }
     else {
-        $ok = $tb->ok( 1, $name );
+        $ok = $tb->ok( 1, $description );
     }
 
     return $ok;
@@ -575,8 +575,8 @@ WHOA
 
 =item B<fail>
 
-  pass($test_name);
-  fail($test_name);
+  pass($test_description);
+  fail($test_description);
 
 Sometimes you just want to say that the tests have passed.  Usually
 the case is you've got some complicated condition that is difficult to
@@ -754,7 +754,7 @@ B<NOTE> I'm not quite sure what will happen with filehandles.
 
 =item B<is_deeply>
 
-  is_deeply( $this, $that, $test_name );
+  is_deeply( $this, $that, $test_description );
 
 Similar to is(), except that if $this and $that are references, it
 does a deep comparison walking each data structure to see if they are
@@ -792,25 +792,25 @@ WARNING
 	return $tb->ok(0);
     }
 
-    my($this, $that, $name) = @_;
+    my($this, $that, $description) = @_;
 
     $tb->_unoverload_str(\$that, \$this);
 
     my $ok;
     if( !ref $this and !ref $that ) {  		# neither is a reference
-        $ok = $tb->is_eq($this, $that, $name);
+        $ok = $tb->is_eq($this, $that, $description);
     }
     elsif( !ref $this xor !ref $that ) {  	# one's a reference, one isn't
-        $ok = $tb->ok(0, $name);
+        $ok = $tb->ok(0, $description);
 	$tb->diag( _format_stack({ vals => [ $this, $that ] }) );
     }
     else {			       		# both references
         local @Data_Stack = ();
         if( _deep_check($this, $that) ) {
-            $ok = $tb->ok(1, $name);
+            $ok = $tb->ok(1, $description);
         }
         else {
-            $ok = $tb->ok(0, $name);
+            $ok = $tb->ok(0, $description);
             $tb->diag(_format_stack(@Data_Stack));
         }
     }
@@ -1473,7 +1473,7 @@ Installing Test::More should also upgrade Test::Harness.
 This is a case of convergent evolution with Joshua Pritikin's Test
 module.  I was largely unaware of its existence when I'd first
 written my own ok() routines.  This module exists because I can't
-figure out how to easily wedge test names into Test's interface (along
+figure out how to easily wedge test descriptions into Test's interface (along
 with a few other problems).
 
 The goal here is to have a testing utility that's simple to learn,

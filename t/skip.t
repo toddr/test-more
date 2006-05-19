@@ -9,7 +9,7 @@ BEGIN {
 
 use Test::More tests => 15;
 
-# If we skip with the same name, Test::Harness will report it back and
+# If we skip with the same description, Test::Harness will report it back and
 # we won't get lots of false bug reports.
 my $Why = "Just testing the skip interface.";
 
