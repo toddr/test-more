@@ -22,8 +22,8 @@ package My::Test;
 
 # This has to be a require or else the END block below runs before
 # Test::Builder's own and the ending diagnostics don't come out right.
-require Test::Builder;
-my $TB = Test::Builder->create;
+require MyTestBuilder;
+my $TB = MyTestBuilder->create;
 $TB->plan(tests => 17);
 
 sub like ($$;$) {
@@ -283,7 +283,7 @@ My::Test::like($err->read, "/^$more_err_re/");
 
 #line 88
 END {
-    $TB->is_eq($$out, <<OUT, 'failing output');
+    $TB->core_tap_ok($$out, <<OUT, 'failing output');
 1..$Total
 not ok - failing
 not ok - foo is bar?

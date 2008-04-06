@@ -14,18 +14,23 @@ BEGIN {
 
 use Test::More tests => 8;
 use Test::Builder;
+use MyTestBuilder;
+{
+    no warnings 'once';
+    *Test::Builder::core_tap_ok = \&MyTestBuilder::core_tap_ok;
+}
 
-my $more_tb = Test::More->builder;
-isa_ok $more_tb, 'Test::Builder';
+my $Test = Test::More->builder;
+isa_ok $Test, 'Test::Builder';
 
-is $more_tb, Test::More->builder, 'create does not interfere with ->builder';
-is $more_tb, Test::Builder->new,  '       does not interfere with ->new';
+is $Test, Test::More->builder, 'create does not interfere with ->builder';
+is $Test, Test::Builder->new,  '       does not interfere with ->new';
 
 {
     my $new_tb  = Test::Builder->create;
 
     isa_ok $new_tb,  'Test::Builder';
-    isnt $more_tb, $new_tb, 'Test::Builder->create makes a new object';
+    isnt $Test, $new_tb, 'Test::Builder->create makes a new object';
 
     $new_tb->output("some_file");
     END { 1 while unlink "some_file" }
@@ -37,7 +42,7 @@ is $more_tb, Test::Builder->new,  '       does not interfere with ->new';
 pass("Changing output() of new TB doesn't interfere with singleton");
 
 ok open FILE, "some_file";
-is join("", <FILE>), <<OUT;
+$Test->core_tap_ok( join("", <FILE>), <<OUT );
 1..1
 ok 1
 OUT
