@@ -177,8 +177,8 @@ sub reset {
 
     $self->{Use_Nums}   = 1;
 
-    $self->{Use_TAP_Version_Header} = undef;
-    $self->{Called_TAP_Version}    = 0;
+    $self->{Use_TAP_Version_Header} = 1;
+    $self->{Called_TAP_Version}     = 0;
 
     $self->{No_Header}  = 0;
     $self->{No_Ending}  = 0;
@@ -1163,6 +1163,7 @@ sub tap_version {
     return $TAP_VERSION;
 }
 
+
 =item B<use_tap_version_header>
 
     $Test->use_tap_version_header($on_or_off);
@@ -1783,25 +1784,21 @@ sub _my_exit {
 sub _ending {
     my $self = shift;
 
-    my $real_exit_code = $?;
-    $self->_sanity_check();
+    return if $Test->no_ending;
 
     # Don't bother with an ending if this is a forked copy.  Only the parent
     # should do the ending.
-    if( $self->{Original_Pid} != $$ ) {
-        return;
-    }
+    return if $self->{Original_Pid} != $$;
     
     # Exit if plan() was never called.  This is so "require Test::Simple" 
     # doesn't puke.
-    if( !$self->{Have_Plan} ) {
-        return;
-    }
+    return if !$self->{Have_Plan};
 
     # Don't do an ending if we bailed out.
-    if( $self->{Bailed_Out} ) {
-        return;
-    }
+    return if $self->{Bailed_Out};
+
+    my $real_exit_code = $?;
+    $self->_sanity_check();
 
     # Figure out if we passed or failed and print helpful messages.
     my $test_results = $self->{Test_Results};
@@ -1850,44 +1847,42 @@ Looks like you failed $num_failed test$s of $num_tests$qualifier.
 FAIL
         }
 
+        my $exit_code = 0;
         if( $real_exit_code ) {
             $self->diag(<<"FAIL");
 Looks like your test died just after $self->{Curr_Test}.
 FAIL
 
-            _my_exit( 255 ) && return;
+            $exit_code = 255;
         }
-
-        my $exit_code;
-        if( $num_failed ) {
+        elsif( $num_failed ) {
             $exit_code = $num_failed <= 254 ? $num_failed : 254;
         }
         elsif( $num_extra != 0 ) {
             $exit_code = 255;
         }
-        else {
-            $exit_code = 0;
-        }
 
-        _my_exit( $exit_code ) && return;
+        _my_exit( $exit_code );
     }
     elsif ( $self->{Skip_All} ) {
-        _my_exit( 0 ) && return;
+        _my_exit( 0 );
     }
     elsif ( $real_exit_code ) {
         $self->diag(<<'FAIL');
 Looks like your test died before it could output anything.
 FAIL
-        _my_exit( 255 ) && return;
+        _my_exit( 255 );
     }
     else {
         $self->diag("No tests run!\n");
-        _my_exit( 255 ) && return;
+        _my_exit( 255 );
     }
+
+    $self->_print("TAP done\n");
 }
 
 END {
-    $Test->_ending if defined $Test and !$Test->no_ending;
+    $Test->_ending if defined $Test;
 }
 
 =head1 EXIT CODES

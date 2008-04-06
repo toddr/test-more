@@ -19,8 +19,8 @@ local $ENV{HARNESS_ACTIVE} = 0;
 
 # Thing to test the tests with
 my $Test = Test::Builder->create;
-$Test->level(0);
-$Test->plan(tests => 7);
+$Test->plan(tests => 9);
+END { $Test->_ending }
 
 my $tb = Test::More->builder;
 
@@ -36,6 +36,7 @@ sub _reset {
 
     $tb->use_tap_version_header(1);
     $tb->no_header(0);
+    $tb->no_ending(0);
 }
 
 
@@ -68,6 +69,7 @@ TAP version $TAP_VERSION
 1..2
 ok 1
 ok 2
+TAP done
 EXPECT
 
 
@@ -80,6 +82,7 @@ TAP version $TAP_VERSION
 1..2
 ok 1
 ok 2
+TAP done
 EXPECT
 
 
@@ -91,6 +94,7 @@ test_envelope_ok sub {
 1..2
 ok 1
 ok 2
+TAP done
 EXPECT
 
 
@@ -102,10 +106,22 @@ test_envelope_ok sub {
 }, <<"EXPECT", "no_header disables TAP version";
 ok 1
 ok 2
+TAP done
 EXPECT
 
 
-# TAP version with no_plan
+test_envelope_ok sub {
+    $tb->no_ending(1);
+
+    standard_test();
+}, <<"EXPECT", "no_ending disables TAP done";
+TAP version $TAP_VERSION
+1..2
+ok 1
+ok 2
+EXPECT
+
+
 test_envelope_ok sub {
     $tb->use_tap_version_header(1);
 
@@ -114,10 +130,27 @@ test_envelope_ok sub {
     pass();
     $tb->_ending;
 
+    _reset($tb);
 }, <<"EXPECT", "TAP version with no_plan";
 TAP version $TAP_VERSION
 ok 1
 ok 2
 1..2
+TAP done
 EXPECT
 
+
+test_envelope_ok sub {
+    $tb->use_tap_version_header(1);
+    $tb->no_ending(1);
+
+    plan "no_plan";
+    pass();
+    pass();
+
+    _reset($tb);
+}, <<"EXPECT", "no TAP done with no_plan and no_ending";
+TAP version $TAP_VERSION
+ok 1
+ok 2
+EXPECT

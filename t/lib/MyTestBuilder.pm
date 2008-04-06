@@ -10,6 +10,7 @@ sub core_tap_ok {
     for my $tap ( \($have, $want) ) {
         _strip_tap_version($tap);
         _strip_tap_meta($tap);
+        _strip_tap_done($tap);
     }
 
     local $Test::Builder::Level = $Test::Builder::Level + 1;
@@ -30,6 +31,12 @@ sub _strip_tap_meta {
                    *?
                ^\s+ ... \n
               }{}mx;
+}
+
+sub _strip_tap_done {
+    my $tap = shift;
+
+    $$tap =~ s{^TAP done\n$}{}m;
 }
 
 1;

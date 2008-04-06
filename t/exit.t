@@ -28,6 +28,7 @@ if( $^O eq 'MacOS' ) {
 require Test::Builder;
 my $TB = Test::Builder->create();
 $TB->level(0);
+END { $TB->_ending }
 
 
 package main;
