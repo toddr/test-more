@@ -8,16 +8,12 @@ BEGIN {
     }
 }
 
-# Can't use Test.pm, that's a 5.005 thing.
-package My::Test;
 
 # This has to be a require or else the END block below runs before
 # Test::Builder's own and the ending diagnostics don't come out right.
-require Test::Builder;
-my $TB = Test::Builder->create;
-$TB->plan(tests => 2);
-
-sub is { $TB->is_eq(@_) }
+require MyTestBuilder;
+my $Test = MyTestBuilder->create;
+$Test->plan(tests => 2);
 
 
 package main;
@@ -35,13 +31,13 @@ ok(1, 'Foo');
 ok(0, 'Bar');
 
 END {
-    My::Test::is($$out, <<OUT);
+    $Test->core_tap_ok($$out, <<OUT);
 1..5
 ok 1 - Foo
 not ok 2 - Bar
 OUT
 
-    My::Test::is($$err, <<ERR);
+    $Test->is_eq($$err, <<ERR);
 #   Failed test 'Bar'
 #   at $0 line 31.
 # Looks like you planned 5 tests but only ran 2.

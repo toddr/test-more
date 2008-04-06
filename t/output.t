@@ -12,31 +12,21 @@ BEGIN {
 chdir 't';
 
 
-# Can't use Test.pm, that's a 5.005 thing.
-print "1..4\n";
+use MyTestBuilder;
+my $Test = MyTestBuilder->create;
+$Test->plan( tests => 4 );
 
-my $test_num = 1;
-# Utility testing functions.
-sub ok ($;$) {
-    my($test, $name) = @_;
-    my $ok = '';
-    $ok .= "not " unless $test;
-    $ok .= "ok $test_num";
-    $ok .= " - $name" if defined $name;
-    $ok .= "\n";
-    print $ok;
-    $test_num++;
+sub ok { $Test->ok(@_) }
+sub is { $Test->is_eq(@_) }
 
-    return $test;
-}
 
 use TieOut;
 use Test::Builder;
-my $Test = Test::Builder->new();
+my $tb = Test::Builder->new();
 
 my $result;
 my $tmpfile = 'foo.tmp';
-my $out = $Test->output($tmpfile);
+my $out = $tb->output($tmpfile);
 END { 1 while unlink($tmpfile) }
 
 ok( defined $out );
@@ -49,10 +39,10 @@ open(IN, $tmpfile) or die $!;
 chomp(my $line = <IN>);
 close IN;
 
-ok($line eq 'hi!');
+is($line, 'hi!');
 
 open(FOO, ">>$tmpfile") or die $!;
-$out = $Test->output(\*FOO);
+$out = $tb->output(\*FOO);
 $old = select *$out;
 print "Hello!\n";
 close *$out;
@@ -68,19 +58,19 @@ ok($lines[1] =~ /Hello!/);
 
 # Ensure stray newline in name escaping works.
 $out = tie *FAKEOUT, 'TieOut';
-$Test->output(\*FAKEOUT);
-$Test->exported_to(__PACKAGE__);
-$Test->no_ending(1);
-$Test->plan(tests => 5);
+$tb->output(\*FAKEOUT);
+$tb->exported_to(__PACKAGE__);
+$tb->no_ending(1);
+$tb->plan(tests => 5);
 
-$Test->ok(1, "ok");
-$Test->ok(1, "ok\n");
-$Test->ok(1, "ok, like\nok");
-$Test->skip("wibble\nmoof");
-$Test->todo_skip("todo\nskip\n");
+$tb->ok(1, "ok");
+$tb->ok(1, "ok\n");
+$tb->ok(1, "ok, like\nok");
+$tb->skip("wibble\nmoof");
+$tb->todo_skip("todo\nskip\n");
 
 my $output = $out->read;
-ok( $output eq <<OUTPUT ) || print STDERR $output;
+$Test->core_tap_ok( $output, <<OUTPUT ) || print STDERR $output;
 1..5
 ok 1 - ok
 ok 2 - ok
