@@ -1,6 +1,11 @@
-0.79_02
+0.80_01
     New Features
     - Now outputs the TAP version header when applicable.
+
+
+0.80  Sun Apr  6 17:25:01 CEST 2008
+    Test fixes
+    - Completely disable the utf8 test.  It was causing perl to panic on some OS's.
 
 
 0.79_01  Wed Feb 27 03:04:54 PST 2008
