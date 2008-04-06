@@ -243,6 +243,21 @@ sub plan {
     return 1;
 }
 
+
+# XXX expose this publicly?
+sub _print_plan {
+    my $self = shift;
+    my $max  = shift;
+    my $skip_reason = shift;
+
+    my $plan = "1..$max";
+
+    $plan .= " # SKIP $skip_reason" if defined $skip_reason;
+
+    $self->_print("$plan\n");
+}
+
+
 =item B<expected_tests>
 
     my $max = $Test->expected_tests;
@@ -264,7 +279,7 @@ sub expected_tests {
         $self->{Expected_Tests} = $max;
         $self->{Have_Plan}      = 1;
 
-        $self->_print("1..$max\n") unless $self->no_header;
+        $self->_print_plan($max) unless $self->no_header;
     }
     return $self->{Expected_Tests};
 }
@@ -314,13 +329,9 @@ Skips all the tests, using the given $reason.  Exits immediately with 0.
 sub skip_all {
     my($self, $reason) = @_;
 
-    my $out = "1..0";
-    $out .= " # Skip $reason" if $reason;
-    $out .= "\n";
-
     $self->{Skip_All} = 1;
 
-    $self->_print($out) unless $self->no_header;
+    $self->_print_plan(0, $reason) unless $self->no_header;
     exit(0);
 }
 
@@ -1731,7 +1742,7 @@ sub _ending {
     if( @$test_results ) {
         # The plan?  We have no plan.
         if( $self->{No_Plan} ) {
-            $self->_print("1..$self->{Curr_Test}\n") unless $self->no_header;
+            $self->_print_plan($self->{Curr_Test}) unless $self->no_header;
             $self->{Expected_Tests} = $self->{Curr_Test};
         }
 
