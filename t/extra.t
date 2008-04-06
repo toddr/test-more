@@ -5,6 +5,9 @@ BEGIN {
         chdir 't';
         @INC = '../lib';
     }
+    else {
+        unshift @INC, 't/lib';
+    }
 }
 
 # Can't use Test.pm, that's a 5.005 thing.
@@ -12,8 +15,8 @@ package My::Test;
 
 # This has to be a require or else the END block below runs before
 # Test::Builder's own and the ending diagnostics don't come out right.
-require Test::Builder;
-my $TB = Test::Builder->create;
+require MyTestBuilder;
+my $TB = MyTestBuilder->create;
 $TB->plan(tests => 2);
 
 
@@ -37,7 +40,7 @@ ok(1, 'Car');
 ok(0, 'Sar');
 
 END {
-    $TB->is_eq($$out, <<OUT);
+    $TB->core_tap_ok($$out, <<OUT);
 1..3
 ok 1 - Foo
 not ok 2 - Bar

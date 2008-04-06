@@ -20,11 +20,11 @@ package My::Test;
 
 # This has to be a require or else the END block below runs before
 # Test::Builder's own and the ending diagnostics don't come out right.
-require Test::Builder;
-my $TB = Test::Builder->create;
-$TB->plan(tests => 2);
+require MyTestBuilder;
+my $Test = MyTestBuilder->create;
+$Test->plan(tests => 2);
 
-sub is { $TB->is_eq(@_) }
+sub is { $Test->is_eq(@_) }
 
 
 package main;
@@ -36,7 +36,7 @@ ok(1);
 ok(1);
 
 END {
-    My::Test::is($$out, <<OUT);
+    $Test->core_tap_ok($$out, <<OUT);
 1..1
 ok 1
 ok 2

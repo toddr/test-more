@@ -16,7 +16,7 @@ BEGIN {
 }
 
 
-use Test::Builder;
+use MyTestBuilder;
 use Test::More;
 use TieOut;
 
@@ -24,7 +24,7 @@ my $output = tie *FAKEOUT, 'TieOut';
 my $TB = Test::More->builder;
 $TB->output(\*FAKEOUT);
 
-my $Test = Test::Builder->create;
+my $Test = MyTestBuilder->create;
 $Test->level(0);
 
 if( $] >= 5.005 ) {
@@ -40,8 +40,7 @@ plan tests => 4;
 
 BAIL_OUT("ROCKS FALL! EVERYONE DIES!");
 
-
-$Test->is_eq( $output->read, <<'OUT' );
+$Test->core_tap_ok( $output->read, <<'OUT' );
 1..4
 Bail out!  ROCKS FALL! EVERYONE DIES!
 OUT

@@ -61,6 +61,10 @@ BEGIN {
 }
 
 
+my $TAP_VERSION = 13;
+my $TAP_HEADER_MIN_VERSION = 13;
+
+
 =head1 NAME
 
 Test::Builder - Backend for building test libraries
@@ -174,6 +178,9 @@ sub reset {
 
     $self->{Use_Nums}   = 1;
 
+    $self->{Use_TAP_Version_Header} = undef;
+    $self->{Called_TAP_Version}    = 0;
+
     $self->{No_Header}  = 0;
     $self->{No_Ending}  = 0;
 
@@ -250,11 +257,31 @@ sub _print_plan {
     my $max  = shift;
     my $skip_reason = shift;
 
+    return 0 if $self->no_header;
+
     my $plan = "1..$max";
 
     $plan .= " # SKIP $skip_reason" if defined $skip_reason;
 
     $self->_print("$plan\n");
+}
+
+
+sub _print_TAP_version {
+    my $self = shift;
+
+    return 0 if $self->{Called_TAP_Version}++;
+
+    return 0 if $self->no_header;
+
+    if( defined $self->use_tap_version_header ) {
+        return 0 if !$self->use_tap_version_header;
+    }
+    else {
+        return 0 if ($ENV{TAP_VERSION} || 0) < $TAP_HEADER_MIN_VERSION;
+    }
+
+    $self->_really_print("TAP version $TAP_VERSION\n");
 }
 
 
@@ -279,7 +306,7 @@ sub expected_tests {
         $self->{Expected_Tests} = $max;
         $self->{Have_Plan}      = 1;
 
-        $self->_print_plan($max) unless $self->no_header;
+        $self->_print_plan($max);
     }
     return $self->{Expected_Tests};
 }
@@ -331,7 +358,7 @@ sub skip_all {
 
     $self->{Skip_All} = 1;
 
-    $self->_print_plan(0, $reason) unless $self->no_header;
+    $self->_print_plan(0, $reason);
     exit(0);
 }
 
@@ -1129,6 +1156,40 @@ sub use_numbers {
 }
 
 
+=item B<tap_version>
+
+    my $tap_version = $Test->tap_version;
+
+Returns the version of TAP Test::Builder is outputting.
+
+=cut
+
+sub tap_version {
+    return $TAP_VERSION;
+}
+
+=item B<use_tap_version_header>
+
+    $Test->use_tap_version_header($on_or_off);
+
+Set whether we should use the TAP version header.  All TAP after
+version 13 has to have a version header.
+
+If it's left undefined, Test::Builder will make a guess.
+
+=cut
+
+sub use_tap_version_header {
+    my $self = shift;
+
+    if( @_ ) {
+        $self->{Use_TAP_Version_Header} = shift;
+    }
+
+    return $self->{Use_TAP_Version_Header};
+}
+
+
 =item B<no_diag>
 
     $Test->no_diag($no_diag);
@@ -1250,6 +1311,16 @@ sub _print {
     # Prevent printing headers when only compiling.  Mostly for when
     # tests are deparsed with B::Deparse
     return if $^C;
+
+    $self->_print_TAP_version;
+
+    $self->_really_print(@msgs);
+}
+
+
+# Always print no matter what
+sub _really_print {
+    my($self, @msgs) = @_;
 
     my $msg = join '', @msgs;
 
@@ -1742,7 +1813,7 @@ sub _ending {
     if( @$test_results ) {
         # The plan?  We have no plan.
         if( $self->{No_Plan} ) {
-            $self->_print_plan($self->{Curr_Test}) unless $self->no_header;
+            $self->_print_plan($self->{Curr_Test});
             $self->{Expected_Tests} = $self->{Curr_Test};
         }
 
