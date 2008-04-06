@@ -62,7 +62,6 @@ BEGIN {
 
 
 my $TAP_VERSION = 13;
-my $TAP_HEADER_MIN_VERSION = 13;
 
 
 =head1 NAME
@@ -274,12 +273,8 @@ sub _print_TAP_version {
 
     return 0 if $self->no_header;
 
-    if( defined $self->use_tap_version_header ) {
-        return 0 if !$self->use_tap_version_header;
-    }
-    else {
-        return 0 if ($ENV{TAP_VERSION} || 0) < $TAP_HEADER_MIN_VERSION;
-    }
+    return 0 if defined $self->use_tap_version_header
+                 and   !$self->use_tap_version_header;
 
     $self->_really_print("TAP version $TAP_VERSION\n");
 }

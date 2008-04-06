@@ -20,7 +20,7 @@ local $ENV{HARNESS_ACTIVE} = 0;
 # Thing to test the tests with
 my $Test = Test::Builder->create;
 $Test->level(0);
-$Test->plan(tests => 10);
+$Test->plan(tests => 7);
 
 my $tb = Test::More->builder;
 
@@ -34,7 +34,7 @@ sub _reset {
     $builder->{Have_Plan} = 0;
     $builder->{Called_TAP_Version} = 0;
 
-    $tb->use_tap_version_header(undef);
+    $tb->use_tap_version_header(1);
     $tb->no_header(0);
 }
 
@@ -63,29 +63,7 @@ test_envelope_ok sub {
     local $ENV{TAP_VERSION};
 
     standard_test();
-}, <<'EXPECT', 'no TAP_VERSION, no TAP envelope';
-1..2
-ok 1
-ok 2
-EXPECT
-
-
-test_envelope_ok sub {
-    local $ENV{TAP_VERSION} = 12;
-
-    standard_test();
-}, <<'EXPECT', 'TAP_VERSION too low';
-1..2
-ok 1
-ok 2
-EXPECT
-
-
-test_envelope_ok sub {
-    local $ENV{TAP_VERSION} = 13;
-
-    standard_test();
-}, <<"EXPECT", 'TAP_VERSION right level';
+}, <<"EXPECT", 'no TAP_VERSION, TAP envelope anyway';
 TAP version $TAP_VERSION
 1..2
 ok 1
@@ -94,20 +72,6 @@ EXPECT
 
 
 test_envelope_ok sub {
-    local $ENV{TAP_VERSION} = 14;
-
-    standard_test();
-}, <<"EXPECT", "TAP_VERSION at a higher level";
-TAP version $TAP_VERSION
-1..2
-ok 1
-ok 2
-EXPECT
-
-
-test_envelope_ok sub {
-    local $ENV{TAP_VERSION};
-
     $Test->ok( $tb->use_tap_version_header(1) );
 
     standard_test();
@@ -120,8 +84,6 @@ EXPECT
 
 
 test_envelope_ok sub {
-    local $ENV{TAP_VERSION} = 14;
-
     $Test->ok( !$tb->use_tap_version_header(0) );
 
     standard_test();
