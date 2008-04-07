@@ -112,7 +112,7 @@ singleton, use C<create>.
 
 =cut
 
-my $Test = Test::Builder->new;
+our $Test = Test::Builder->new;
 sub new {
     my($class) = shift;
     $Test ||= $class->create;
