@@ -16,22 +16,18 @@ BEGIN {
 }
 
 
-use MyTestBuilder;
+use TestTestMore;
 use Test::More;
 use TieOut;
 
-my $output = tie *FAKEOUT, 'TieOut';
-my $TB = Test::More->builder;
-$TB->output(\*FAKEOUT);
-
-my $Test = MyTestBuilder->create;
-$Test->level(0);
+use Test::Simple::Catch;
+my($out, $err) = Test::Simple::Catch::caught();
 
 if( $] >= 5.005 ) {
-    $Test->plan(tests => 3);
+    $MyTest->plan(tests => 3);
 }
 else {
-    $Test->plan(skip_all => 
+    $MyTest->plan(skip_all => 
           'CORE::GLOBAL::exit, introduced in 5.005, is needed for testing');
 }
 
@@ -40,11 +36,11 @@ plan tests => 4;
 
 BAIL_OUT("ROCKS FALL! EVERYONE DIES!");
 
-$Test->core_tap_ok( $output->read, <<'OUT' );
+$MyTest->core_tap_ok( $out->read, <<'OUT' );
 1..4
 Bail out!  ROCKS FALL! EVERYONE DIES!
 OUT
 
-$Test->is_eq( $Exit_Code, 255 );
+$MyTest->is( $Exit_Code, 255 );
 
-$Test->ok( $Test->can("BAILOUT"), "Backwards compat" );
+$MyTest->can_ok( "Test::Builder", "BAILOUT" );

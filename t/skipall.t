@@ -11,9 +11,8 @@ BEGIN {
 use strict;
 
 # Can't use Test.pm, that's a 5.005 thing.
-use MyTestBuilder;
-my $Test = MyTestBuilder->create;
-$Test->plan( tests => 2 );
+use TestTestMore;
+$MyTest->plan( tests => 2 );
 
 
 package main;
@@ -26,6 +25,6 @@ Test::More->import('skip_all');
 
 
 END {
-    $Test->core_tap_ok($$out, "1..0\n");
-    $Test->is_eq($$err, "");
+    $MyTest->core_tap_ok($$out, "1..0\n");
+    $MyTest->is_eq($$err, "");
 }

@@ -1,3 +1,5 @@
+#!/usr/bin/perl -w
+
 # qr// was introduced in 5.004-devel.  Skip this test if we're not
 # of high enough version.
 BEGIN { 
@@ -23,22 +25,17 @@ BEGIN {
 use strict;
 
 
-# Can't use Test.pm, that's a 5.005 thing.
-package My::Test;
-
 # This has to be a require or else the END block below runs before
 # Test::Builder's own and the ending diagnostics don't come out right.
-require MyTestBuilder;
-my $TB = MyTestBuilder->create;
-$TB->plan(tests => 2);
+require TestTestMore;
+my $MyTest = TestTestMore->builder;
+$MyTest->plan(tests => 2);
 
 
 require Test::Simple::Catch;
 my($out, $err) = Test::Simple::Catch::caught();
 local $ENV{HARNESS_ACTIVE} = 0;
 
-
-package main;
 
 require Test::More;
 Test::More->import(tests => 1);
@@ -47,7 +44,7 @@ eval q{ like( "foo", qr/that/, 'is foo like that' ); };
 
 
 END {
-    $TB->core_tap_ok($$out, <<OUT, 'failing output');
+    $MyTest->core_tap_ok($$out, <<OUT, 'failing output');
 1..1
 not ok 1 - is foo like that
 OUT
@@ -61,7 +58,7 @@ OUT
 ERR
 
 
-    $TB->like($$err, qr/^$err_re$/, 'failing errors');
+    $MyTest->like($$err, qr/^$err_re$/, 'failing errors');
 
     exit(0);
 }

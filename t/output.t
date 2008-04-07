@@ -12,12 +12,8 @@ BEGIN {
 chdir 't';
 
 
-use MyTestBuilder;
-my $Test = MyTestBuilder->create;
-$Test->plan( tests => 4 );
-
-sub ok { $Test->ok(@_) }
-sub is { $Test->is_eq(@_) }
+use TestTestMore;
+$MyTest->plan( tests => 4 );
 
 
 use TieOut;
@@ -29,7 +25,7 @@ my $tmpfile = 'foo.tmp';
 my $out = $tb->output($tmpfile);
 END { 1 while unlink($tmpfile) }
 
-ok( defined $out );
+$MyTest->ok( defined $out );
 
 print $out "hi!\n";
 close *$out;
@@ -39,7 +35,7 @@ open(IN, $tmpfile) or die $!;
 chomp(my $line = <IN>);
 close IN;
 
-is($line, 'hi!');
+$MyTest->is($line, 'hi!');
 
 open(FOO, ">>$tmpfile") or die $!;
 $out = $tb->output(\*FOO);
@@ -52,8 +48,7 @@ open(IN, $tmpfile) or die $!;
 my @lines = <IN>;
 close IN;
 
-ok($lines[1] =~ /Hello!/);
-
+$MyTest->like($lines[1], qr/Hello!/);
 
 
 # Ensure stray newline in name escaping works.
@@ -70,7 +65,7 @@ $tb->skip("wibble\nmoof");
 $tb->todo_skip("todo\nskip\n");
 
 my $output = $out->read;
-$Test->core_tap_ok( $output, <<OUTPUT ) || print STDERR $output;
+$MyTest->core_tap_ok( $output, <<OUTPUT ) || print STDERR $output;
 1..5
 ok 1 - ok
 ok 2 - ok

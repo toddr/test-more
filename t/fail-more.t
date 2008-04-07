@@ -17,28 +17,17 @@ my($out, $err) = Test::Simple::Catch::caught();
 local $ENV{HARNESS_ACTIVE} = 0;
 
 
-# Can't use Test.pm, that's a 5.005 thing.
-package My::Test;
-
 # This has to be a require or else the END block below runs before
 # Test::Builder's own and the ending diagnostics don't come out right.
-require MyTestBuilder;
-my $TB = MyTestBuilder->create;
-$TB->plan(tests => 17);
+require TestTestMore;
+my $MyTest = TestTestMore->builder;
+$MyTest->plan(tests => 17);
 
-sub like ($$;$) {
-    $TB->like(@_);
-}
-
-sub is ($$;$) {
-    $TB->is_eq(@_);
-}
-
-sub main::err_ok ($) {
+sub err_ok ($) {
     my($expect) = @_;
     my $got = $err->read;
 
-    return $TB->is_eq( $got, $expect );
+    return $MyTest->is_eq( $got, $expect );
 }
 
 
@@ -49,7 +38,7 @@ my $Total = 30;
 Test::More->import(tests => $Total);
 
 # This should all work in the presence of a __DIE__ handler.
-local $SIG{__DIE__} = sub { $TB->ok(0, "DIE handler called: ".join "", @_); };
+local $SIG{__DIE__} = sub { $MyTest->ok(0, "DIE handler called: ".join "", @_); };
 
 
 my $tb = Test::More->builder;
@@ -232,9 +221,10 @@ ERR
 #          got: 42
 #     expected: foo
 ERR
-    My::Test::like $warnings,
-     qq[/^Argument "foo" isn't numeric in .* at $Filename line 211\\\.\n\$/];
-
+    $MyTest->like(
+        $warnings,
+        qr/^Argument "foo" isn't numeric in .* at $Filename line 211\.\n$/
+    );
 }
 
 
@@ -266,7 +256,7 @@ my $more_err_re = <<ERR;
 #     Error:  Can't locate Hooble.* in \\\@INC .*
 ERR
 
-My::Test::like($err->read, "/^$more_err_re/");
+$MyTest->like($err->read, "/^$more_err_re/");
 
 
 #line 85
@@ -278,12 +268,12 @@ $more_err_re = <<ERR;
 #     Error:  Can't locate ALL.* in \\\@INC .*
 ERR
 
-My::Test::like($err->read, "/^$more_err_re/");
+$MyTest->like($err->read, "/^$more_err_re/");
 
 
 #line 88
 END {
-    $TB->core_tap_ok($$out, <<OUT, 'failing output');
+    $MyTest->core_tap_ok($$out, <<OUT, 'failing output');
 1..$Total
 not ok - failing
 not ok - foo is bar?

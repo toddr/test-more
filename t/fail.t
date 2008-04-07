@@ -12,9 +12,9 @@ BEGIN {
 
 use strict;
 
-require MyTestBuilder;
-my $Test = MyTestBuilder->create;
-$Test->plan( tests => 2 );
+require TestTestMore;
+my $MyTest = TestTestMore->builder;
+$MyTest->plan( tests => 2 );
 
 require Test::Simple::Catch;
 my($out, $err) = Test::Simple::Catch::caught();
@@ -31,7 +31,7 @@ ok( 0, 'damnit' );
 
 
 END {
-    $Test->core_tap_ok($$out, <<OUT);
+    $MyTest->core_tap_ok($$out, <<OUT);
 1..5
 ok 1 - passing
 ok 2 - passing still
@@ -40,7 +40,7 @@ not ok 4 - oh no!
 not ok 5 - damnit
 OUT
 
-    $Test->is_eq($$err, <<ERR);
+    $MyTest->is_eq($$err, <<ERR);
 #   Failed test 'oh no!'
 #   at $0 line 38.
 #   Failed test 'damnit'

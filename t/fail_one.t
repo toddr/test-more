@@ -12,9 +12,9 @@ BEGIN {
 
 use strict;
 
-require MyTestBuilder;
-my $Test = MyTestBuilder->create;
-$Test->plan(tests => 2);
+require TestTestMore;
+my $MyTest = TestTestMore->builder;
+$MyTest->plan(tests => 2);
 
 
 require Test::Simple::Catch;
@@ -28,12 +28,12 @@ Test::Simple->import(tests => 1);
 ok(0);
 
 END {
-    $Test->core_tap_ok($$out, <<OUT);
+    $MyTest->core_tap_ok($$out, <<OUT);
 1..1
 not ok 1
 OUT
 
-    $Test->is_eq($$err, <<ERR) || print $$err;
+    $MyTest->is_eq($$err, <<ERR) || print $$err;
 #   Failed test at $0 line 45.
 # Looks like you failed 1 test of 1.
 ERR
