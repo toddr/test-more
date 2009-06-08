@@ -22,7 +22,9 @@ $VERSION = eval $VERSION;    ## no critic (BuiltinFunctions::ProhibitStringyEval
 
 use Test::Builder::Module;
 our @ISA    = qw(Test::Builder::Module);
-our @EXPORT = qw(ok use_ok require_ok
+our @EXPORT = qw(
+  ok not_ok
+  use_ok require_ok
   is isnt like unlike is_deeply
   cmp_ok
   skip todo todo_skip
@@ -258,11 +260,11 @@ respectively.
 
 =item B<ok>
 
-  ok($got eq $expected, $test_name);
+  ok($test, $test_name);
 
-This simply evaluates any expression (C<$got eq $expected> is just a
-simple example) and uses that to determine if the test succeeded or
-failed.  A true expression passes, a false one fails.  Very simple.
+This simply evaluates any expression and uses that to determine if the
+test succeeded or failed.  A true expression passes, a false one
+fails.  Very simple.
 
 For example:
 
@@ -294,6 +296,36 @@ sub ok ($;$) {
 
     return $tb->ok( $test, $name );
 }
+
+=item B<not_ok>
+
+  not_ok( $test, $test_name );
+
+The opposite of C<ok>, it passes if the $test is false and succeeds if
+its true.
+
+This is more useful than C<<ok( !$test )>> because it will print out
+diagnostics about what $test was which can be handy.
+
+=cut
+
+sub not_ok($;$) {
+    my( $test, $name ) = @_;
+    my $tb = Test::More->builder;
+
+    my $ok = $tb->ok( !$test, $name );
+    $tb->_diag_fmt( $tb->_looks_like_a_number($test) ? "==" : "eq", \$test );
+
+    if( !$ok ) {
+        $tb->diag(<<"DIAG");
+         got: $test
+    expected: False
+DIAG
+    }
+
+    return $ok;
+}
+
 
 =item B<is>
 

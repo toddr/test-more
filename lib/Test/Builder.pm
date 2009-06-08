@@ -116,7 +116,7 @@ singleton, use C<create>.
 
 =cut
 
-my $Test = Test::Builder->new;
+our $Test = Test::Builder->new;
 
 sub new {
     my($class) = shift;
@@ -703,6 +703,25 @@ sub _diag_fmt {
 
     return;
 }
+
+
+sub _looks_like_a_number {
+    my($self, $thing) = @_;
+
+    return 0 unless defined $thing;
+
+    # looks_like_number() gets this wrong for our purposes
+    return 0 if !ref $thing and $thing eq '0 but true';
+
+    if( $self->_try(sub { require Scalar::Util }) ) {
+        return Scalar::Util::looks_like_number($thing);
+    }
+    else {
+        # Regex to detect decimals from perlfaq4
+        return $thing =~ /^-?(?:\d+(?:\.\d*)?|\.\d+)$/ ? 1 : 0;
+    }
+}
+
 
 sub _is_diag {
     my( $self, $got, $type, $expect ) = @_;
