@@ -1691,6 +1691,92 @@ sub explain {
     } @_;
 }
 
+=item B<info>
+
+  $Test->info(\%info);
+  $Test->info(\%info, \%options);
+
+Adds structured information to the TAP stream.
+
+Usually used to put information about the previous test or meta
+information about the test as a whole.
+
+And example reimplementing is() using ok() and info() would look like:
+
+    $Test->ok( $this eq $that );
+    $Test->info({
+        have => $this,
+        want => $that,
+    });
+
+%options control how %info is formatted.
+
+    format      What format to dump as?  [Defaults to YAML]
+    indent      Number of spaces each line of the the dump should be indented.
+                [Defaults to 2]
+
+YAML and JSON are currently supported.
+
+=cut
+
+my %Format_Map = (
+    YAML => \&_info_as_yaml,
+    JSON => \&_info_as_json,
+);
+sub info {
+    my($self, $info, $options) = @_;
+    $options ||= {};
+
+    my %defaults = (
+        format => 'YAML',
+        indent => 2,
+    );
+    %$options = (%defaults, %$options);
+
+    my $formatter = $Format_Map{$options->{format}};
+    $self->croak("info() doesn't know about format '$options->{format}'")
+      if !$formatter;
+
+    $self->$formatter($info, $options);
+
+    return;
+}
+
+
+sub _info_as_yaml {
+    my($self, $info, $options) = @_;
+
+    require YAML::Any;
+    YAML::Any->import;
+
+    my $yaml = Dump($info);
+    my $pad = " " x $options->{indent};
+    $yaml =~ s{^}{$pad}gms;
+
+    $self->_print_no_escape( $self->output, $yaml );
+
+    return 1;
+}
+
+
+sub _info_as_json {
+    my($self, $info, $options) = @_;
+
+    require JSON::Any;
+    JSON::Any->import;
+    my $j = JSON::Any->new;
+
+    my $json = $j->Dump($info);
+    my $pad = " " x $options->{indent};
+    $json =~ s{^}{$pad}gms;
+
+    $self->_print_no_escape( $self->output, $json );
+    $self->_print("\n");
+
+    return 1;
+}
+
+
 =begin _private
 
 =item B<_print>
@@ -1711,13 +1797,7 @@ sub _print {
 sub _print_to_fh {
     my( $self, $fh, @msgs ) = @_;
 
-    # Prevent printing headers when only compiling.  Mostly for when
-    # tests are deparsed with B::Deparse
-    return if $^C;
-
     my $msg = join '', @msgs;
-
-    local( $\, $", $, ) = ( undef, ' ', '' );
 
     # Escape each line after the first with a # so we don't
     # confuse Test::Harness.
@@ -1726,8 +1806,21 @@ sub _print_to_fh {
     # Stick a newline on the end if it needs it.
     $msg .= "\n" unless $msg =~ /\n\z/;
 
-    return print $fh $self->_indent, $msg;
+    return $self->_print_no_escape($fh, $msg);
 }
+
+
+sub _print_no_escape {
+    my($self, $fh, @msgs) = @_;
+
+    # Prevent printing headers when only compiling.  Mostly for when
+    # tests are deparsed with B::Deparse
+    return if $^C;
+
+    local( $\, $", $, ) = ( undef, ' ', '' );
+    return print $fh $self->_indent, @msgs;
+}
+
 
 =item B<output>
 

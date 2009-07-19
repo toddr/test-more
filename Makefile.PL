@@ -66,6 +66,11 @@ WriteMakefile(
 
     PREREQ_PM       => { 
         Test::Harness   => 2.03,
+
+        # These are temporary to support info dumping experimentation.
+        JSON::Any       => 1.21,
+        YAML::Any       => 0.67,
+
         %Prereqs
     },
 
