@@ -31,6 +31,7 @@ Test::Simple->import(tests => 1);
 
 END {
     $TB->is_eq($out->read, <<OUT);
+TAP Version 13
 1..1
 OUT
 

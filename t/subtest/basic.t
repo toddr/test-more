@@ -42,6 +42,7 @@ $ENV{HARNESS_ACTIVE} = 0;
 
     $tb->reset_outputs;
     is $tb->read, <<"END", 'Output should nest properly';
+TAP Version 13
 1..7
 ok 1 - We're on 1
 # We ran 1
@@ -49,6 +50,7 @@ ok 2 - We're on 2
 # We ran 2
 ok 3 - We're on 3
 # We ran 3
+    TAP Version 13
     ok 1 - We're on 1
     ok 2 - We're on 2
     ok 3 - We're on 3
@@ -88,9 +90,12 @@ END
     $tb->_ending;
     $tb->reset_outputs;
     is $tb->read, <<"END", 'We should allow arbitrary nesting';
+TAP Version 13
 ok 1 - We're on 1
 # We ran 1
+    TAP Version 13
     ok 1 - We're on 1
+        TAP Version 13
         1..2
         ok 1 - We're on 2.1
         ok 2 - We're on 2.1
@@ -104,37 +109,42 @@ END
 }
 
 {
-#line 108
+#line 113
     my $tb = Test::Builder::NoOutput->create;
 
     {
-        my $child = $tb->new_child('expected to fail');
-        $child->plan( tests => 3 );
-        $child->ok(1);
-        $child->ok(0);
-        $child->ok(3);
-        $child->finalize;
-    }
+        $tb->subtest('expected to fail' => sub {
+            my $child = $tb->{Child};
+            $child->level(3);
+            $child->plan( tests => 3 );
+            $child->ok(1);
+            $child->ok(0);
+            $child->ok(3);
+        });
 
-    {
-        my $child = $tb->new_child('expected to pass');
-        $child->plan( tests => 3 );
-        $child->ok(1);
-        $child->ok(2);
-        $child->ok(3);
-        $child->finalize;
+        $tb->subtest('expected to pass' => sub {
+            my $child = $tb->{Child};
+            $child->level(3);
+            $child->plan( tests => 3 );
+            $child->ok(1);
+            $child->ok(2);
+            $child->ok(3);
+        });
     }
     $tb->reset_outputs;
     is $tb->read, <<"END", 'Previous child failures should not force subsequent failures';
+TAP Version 13
+    TAP Version 13
     1..3
     ok 1
     not ok 2
-    #   Failed test at $0 line 114.
+    #   Failed test at $0 line 123.
     ok 3
     # Looks like you failed 1 test of 3.
 not ok 1 - expected to fail
 #   Failed test 'expected to fail'
-#   at $0 line 116.
+#   at $0 line 123.
+    TAP Version 13
     1..3
     ok 1
     ok 2
@@ -212,7 +222,9 @@ END
     $tb->_ending;
     $tb->reset_outputs;
     is $tb->read, <<"END", 'TODO tests should not make the parent test fail';
+TAP Version 13
 1..1
+    TAP Version 13
     1..1
     not ok 1 # TODO message
     #   Failed (TODO) test at $0 line 209.
@@ -227,6 +239,7 @@ END
     $tb->_ending;
     $tb->reset_outputs;
     my $expected = <<"END";
+TAP Version 13
 1..1
 not ok 1 - No tests run for subtest "Child of $0"
 END

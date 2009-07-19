@@ -98,6 +98,7 @@ END { 1 while unlink($tmpfile) }
     $tb->todo_skip("todo\nskip\n");
 
     $Test->is_eq( $fakeout, <<OUTPUT ) || print STDERR $fakeout;
+TAP Version 13
 1..5
 ok 1 - ok
 ok 2 - ok
