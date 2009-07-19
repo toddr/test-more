@@ -1808,7 +1808,7 @@ sub std_info {
     $info ||= {};
 
     my(undef, $file, $line) = $self->caller(1);
-    %$info = ( file => $file, line => $line, %$info );
+    %$info = ( line => $line, %$info );
 
     return $self->info($info, $options);
 }
@@ -1864,6 +1864,40 @@ sub _print_tap_version {
     return if $self->no_header;
     return if $self->{printed_tap_version}++;
     $self->_print("TAP Version 13");
+
+    my(undef, $file) = $self->caller(1);
+
+    $self->info({
+        file            => $file,
+        date            => $self->_iso_datetime,
+        Perl_Version    => $self->_perl_version,
+        tap_outputter   => "Test::Builder $Test::Builder::VERSION",
+    });
+
+    return 1;
+}
+
+
+sub _iso_datetime {
+    my $self = shift;
+    my $time = @_ ? shift : time;
+
+    my @time = gmtime($time);
+    return sprintf "%04d-%02d-%02dT%02d:%02d:%02dZ",
+      $time[5] + 1900,
+      $time[4] + 1,
+      $time[3],
+      $time[2],
+      $time[1],
+      $time[0]
+    ;
+}
+
+
+sub _perl_version {
+    my $self = shift;
+    my($major, $minor, $patch) = $] =~ /^ (\d+) \. (\d{3}) (\d{3}) $/x;
+    return sprintf "%d.%d.%d", $major, $minor, $patch;
 }
 
 
