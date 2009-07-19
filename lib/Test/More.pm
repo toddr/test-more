@@ -293,7 +293,7 @@ sub ok ($;$) {
     my $tb = Test::More->builder;
 
     my $ret = $tb->ok( $test, $name );
-    $tb->std_info({ have => $test, want => "A true value" });
+    $tb->std_info({ have => $test, cmp => "is true" });
 
     return $ret;
 }
