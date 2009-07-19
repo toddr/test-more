@@ -36,6 +36,7 @@ t/Builder/done_testing_with_plan.t
 t/Builder/fork_with_new_stdout.t
 t/Builder/has_plan.t
 t/Builder/has_plan2.t
+t/Builder/info.t
 t/Builder/is_fh.t
 t/Builder/is_passing.t
 t/Builder/maybe_regex.t
