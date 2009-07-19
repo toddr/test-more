@@ -916,6 +916,7 @@ sub is_eq {
 
         $self->ok( $test, $name );
         $self->_is_diag( $got, 'eq', $expect ) unless $test;
+        $self->std_info({ have => $got, want => $expect });
         return $test;
     }
 
@@ -934,6 +935,7 @@ sub is_num {
 
         $self->ok( $test, $name );
         $self->_is_diag( $got, '==', $expect ) unless $test;
+        $self->std_info({ have => $got, want => $expect });
         return $test;
     }
 
@@ -1011,6 +1013,7 @@ sub isnt_eq {
 
         $self->ok( $test, $name );
         $self->_isnt_diag( $got, 'ne' ) unless $test;
+        $self->std_info({ have => $got, cmp => "ne", want => "$dont_expect" });
         return $test;
     }
 
@@ -1027,6 +1030,7 @@ sub isnt_num {
 
         $self->ok( $test, $name );
         $self->_isnt_diag( $got, '!=' ) unless $test;
+        $self->std_info({ have => $got, cmp => "!=", want => $dont_expect });
         return $test;
     }
 
@@ -1126,6 +1130,13 @@ END
             $self->_cmp_diag( $got, $type, $expect );
         }
     }
+
+    $self->std_info({
+        have => $got,
+        want => $expect,
+        cmp  => $type
+    });
+
     return $ok;
 }
 
@@ -1360,7 +1371,9 @@ sub _regex_ok {
     unless( defined $usable_regex ) {
         local $Level = $Level + 1;
         $ok = $self->ok( 0, $name );
-        $self->diag("    '$regex' doesn't look much like a regex to me.");
+        my $diag = qq['$regex' doesn't look much like a regex to me.];
+        $self->diag("    $diag");
+        $self->std_info({ have => $this, want => $regex, cmp => $cmp, display => $diag });
         return $ok;
     }
 
@@ -1396,6 +1409,7 @@ DIAGNOSTIC
 
     }
 
+    $self->std_info({ have => $this, want => $regex, cmp => $cmp });
     return $ok;
 }
 
@@ -1780,6 +1794,24 @@ sub _info_as_json {
     return 1;
 }
 
+
+=item B<std_info>
+
+   $Test->std_info( \%info, \%options );
+
+Like info() but it includes standard test information like "file" and "line".
+
+=cut
+
+sub std_info {
+    my( $self, $info, $options ) = @_;
+    $info ||= {};
+
+    my(undef, $file, $line) = $self->caller(1);
+    %$info = ( file => $file, line => $line, %$info );
+
+    return $self->info($info, $options);
+}
 
 =begin _private
 

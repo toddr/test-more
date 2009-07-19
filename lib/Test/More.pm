@@ -292,7 +292,10 @@ sub ok ($;$) {
     my( $test, $name ) = @_;
     my $tb = Test::More->builder;
 
-    return $tb->ok( $test, $name );
+    my $ret = $tb->ok( $test, $name );
+    $tb->std_info({ have => $test, want => "A true value" });
+
+    return $ret;
 }
 
 =item B<is>
