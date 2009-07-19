@@ -25,6 +25,7 @@ use Test::Builder::NoOutput;
     $tb->_ending;
 
     is($tb->read, <<OUT);
+TAP Version 13
 ok 1 - foo
 1..1
 OUT

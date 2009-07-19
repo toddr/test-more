@@ -28,6 +28,10 @@ my $err = '';
 }
 
 END {
-    $Test->is_eq($out, "1..0 # SKIP\n");
+    $Test->is_eq($out, <<OUT);
+TAP Version 13
+1..0 # SKIP
+OUT
+
     $Test->is_eq($err, "");
 }

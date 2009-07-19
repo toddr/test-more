@@ -30,6 +30,7 @@ my $tb = Test::Builder::NoOutput->create;
 }
 
 $Test->is_eq($tb->read, <<'END', "proper behavior when no plan is seen");
+TAP Version 13
 ok 1 - just a test
 ok 2 -   and another
 # Tests were run but no plan was declared and done_testing() was not seen.

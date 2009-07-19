@@ -212,6 +212,8 @@ sub subtest {
     my $child = $self->new_child($name);
     local $Test::Builder::Test = $child;
 
+    $self->_print_tap_version;
+
     $self->{In_Subtest} = 1;
     unless( eval { $subtests->(); 1 } ) {
         my $error = $@;
@@ -557,6 +559,7 @@ sub _output_plan {
     $plan .= " # $directive" if defined $directive;
     $plan .= " $reason"      if defined $reason;
 
+    $self->_print_tap_version unless $self->current_test;
     $self->_print("$plan\n");
 
     $self->{Have_Output_Plan} = 1;
@@ -793,6 +796,7 @@ ERR
     $self->{Test_Results}[ $self->{Curr_Test} - 1 ] = $result;
     $out .= "\n";
 
+    $self->_print_tap_version if $self->{Curr_Test} == 1;
     $self->_print($out);
 
     unless($test) {
@@ -1822,6 +1826,15 @@ sub _print_no_escape {
 }
 
 
+sub _print_tap_version {
+    my $self = shift;
+
+    return if $self->no_header;
+    return if $self->{printed_tap_version}++;
+    $self->_print("TAP Version 13");
+}
+
+
 =item B<output>
 
 =item B<failure_output>
@@ -2356,6 +2369,18 @@ sub caller {    ## no critic (Subroutines::ProhibitBuiltinHomonyms)
         $level--;
     } until @caller;
     return wantarray ? @caller : $caller[0];
+}
+
+sub _dump_caller {
+    my $self = shift;
+
+    my $level = 0;
+    while( my @caller = CORE::caller( $level ) ) {
+        printf "$level: %s\n", join " - ", @caller[0..2];
+        $level++;
+    }
+
+    return;
 }
 
 =back

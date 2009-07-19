@@ -38,6 +38,7 @@ ok(0, 'Sar');
 
 END {
     $TB->is_eq($$out, <<OUT);
+TAP Version 13
 1..3
 ok 1 - Foo
 not ok 2 - Bar

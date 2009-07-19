@@ -37,6 +37,7 @@ ok(1);
 
 END {
     My::Test::is($$out, <<OUT);
+TAP Version 13
 1..1
 ok 1
 ok 2

@@ -34,6 +34,7 @@ BAIL_OUT("ROCKS FALL! EVERYONE DIES!");
 
 
 $Test->is_eq( $output, <<'OUT' );
+TAP Version 13
 1..4
 Bail out!  ROCKS FALL! EVERYONE DIES!
 OUT
