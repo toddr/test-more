@@ -1782,7 +1782,7 @@ sub _info_as_json {
 
     require JSON::Any;
     JSON::Any->import;
-    my $j = JSON::Any->new;
+    my $j = JSON::Any->new( allow_blessed => 1 );
 
     my $json = $j->Dump($info);
     my $pad = " " x $options->{indent};
