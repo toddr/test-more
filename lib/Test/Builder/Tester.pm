@@ -57,7 +57,8 @@ my $t = Test::Builder->new;
 use Exporter;
 our @ISA = qw(Exporter);
 
-our @EXPORT = qw(test_out test_err test_fail test_diag test_test line_num);
+our @EXPORT = qw(test_out test_err test_fail test_diag test_test line_num
+                                                                test_in_todo);
 
 sub import {
     my $class = shift;
@@ -109,6 +110,8 @@ my $original_harness_state;
 
 my $original_harness_env;
 
+my $test_in_todo;
+
 # function that starts testing and redirects the filehandles for now
 sub _start_testing {
     # even if we're running under Test::Harness pretend we're not
@@ -141,7 +144,7 @@ sub _start_testing {
 
 =head2 Functions
 
-These are the six methods that are exported as default.
+These are the seven methods that are exported as default.
 
 =over 4
 
@@ -221,8 +224,13 @@ sub test_fail {
     my( $package, $filename, $line ) = caller;
     $line = $line + ( shift() || 0 );    # prevent warnings
 
-    # expect that on stderr
-    $err->expect("#     Failed test ($0 at line $line)");
+    my $failed_test = "Failed test";
+    if ($test_in_todo) {
+        $failed_test = "Failed (TODO) test";
+    }
+
+    # expect that diag output
+    test_diag("    $failed_test ($0 at line $line)");
 }
 
 =item test_diag
@@ -261,7 +269,37 @@ sub test_diag {
 
     # expect the same thing, but prepended with "#     "
     local $_;
-    $err->expect( map { "# $_" } @_ );
+    my $output_dest = $test_in_todo ? $out : $err;
+    $output_dest->expect( map { "# $_" } @_ );
+}
+
+=item test_in_todo
+
+Sets or clears a flag that configures C<test_fail> and C<test_diag> for
+testing tests run within a C<TODO> block.  This is necessary because
+the failure message for a C<TODO> test differs from the message for a
+regular test, and because diagnostic output goes to STDOUT rather than
+STDERR in C<TODO> blocks.
+
+  # test a failing test in a todo block
+  test_in_todo(1);
+  test_out("not ok 1 - failed # TODO My Todo Reason");
+  test_fail(+6);
+  test_diag("message");
+  test_in_todo(0);
+
+  TODO: {
+      local $TODO = "My Todo Reason";
+      fail("failed");
+      diag("message");
+  }
+
+  test_test("failed TODO test");
+
+=cut
+
+sub test_in_todo {
+    $test_in_todo = shift;
 }
 
 =item test_test
@@ -370,7 +408,7 @@ sub line_num {
 
 =back
 
-In addition to the six exported functions there there exists one
+In addition to the seven exported functions there there exists one
 function that can only be accessed with a fully qualified function
 call.
 

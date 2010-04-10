@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-use Test::Builder::Tester tests => 9;
+use Test::Builder::Tester tests => 12;
 use Test::More;
 
 ok(1,"This is a basic test");
@@ -52,4 +52,50 @@ TODO: {
     fail("name");
 }
 test_test("testing failing with todo");
+
+
+# example in T::B::T POD
+test_in_todo(1);
+test_out("not ok 1 - failed # TODO My Todo Reason");
+test_fail(+6);
+test_diag("message");
+test_in_todo(0);
+
+TODO: {
+  local $TODO = "My Todo Reason";
+  fail("failed");
+  diag("message");
+}
+
+test_test("failed TODO test");
+
+
+test_out("not ok 1 - foo");
+test_fail(+1);
+fail("foo");
+test_test("failed test after using test_in_todo");
+
+
+test_out("not ok 1 - foo");
+test_fail(+10);
+test_diag("foo diag");
+test_in_todo(1);
+test_out("not ok 2 - bar # TODO Reason");
+test_fail(+10);
+test_diag("bar diag");
+test_in_todo(0);
+test_out("not ok 3 - baz");
+test_fail(+9);
+test_diag("baz diag");
+fail("foo");
+diag("foo diag");
+TODO: {
+    local $TODO = "Reason";
+    fail("bar");
+    diag("bar diag");
+}
+fail("baz");
+diag("baz diag");
+test_test("in and out of TODO");
+
 
