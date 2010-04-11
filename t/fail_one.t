@@ -30,7 +30,7 @@ my $Test = Test::Builder->new;
     $tb->_ending;
 
     $Test->is_eq($tb->read('out'), <<OUT);
-TAP Version 13
+TAP Version 14
 1..1
 not ok 1
 OUT

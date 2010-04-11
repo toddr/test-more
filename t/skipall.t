@@ -29,7 +29,7 @@ my $err = '';
 
 END {
     $Test->is_eq($out, <<OUT);
-TAP Version 13
+TAP Version 14
 1..0 # SKIP
 OUT
 

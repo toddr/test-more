@@ -101,6 +101,7 @@ package main;
 test_subtest_in_todo("plan, no tests run", sub {
     plan tests => 2;
 }, <<END, 1);
+    TAP Version 14
     1..2
     # No tests run!
 END
@@ -108,12 +109,14 @@ END
 test_subtest_in_todo("noplan, no tests run", sub {
     plan 'no_plan';
 }, <<END, 1);
+    TAP Version 14
     # No tests run!
 END
 
 test_subtest_in_todo("missingplan, no tests run", sub {
     1;
 }, <<END, 1);
+    TAP Version 14
     1..0
     # No tests run!
 END
@@ -121,6 +124,7 @@ END
 test_subtest_in_todo("donetesting, no tests run", sub {
     done_testing;
 }, <<END, 1);
+    TAP Version 14
     1..0
     # No tests run!
 END
@@ -128,6 +132,7 @@ END
 test_subtest_in_todo("1 failed test", sub {
     ok 0, 'failme'; BEGIN { $line{fail1} = __LINE__ }
 }, <<END);
+    TAP Version 14
     not ok 1 - failme
     #   Failed test 'failme'
     #   at $0 line $line{fail1}.
@@ -139,6 +144,7 @@ test_subtest_in_todo("1fail, wrongplan", sub {
     plan tests => 17;
     ok 0, 'failme'; BEGIN { $line{fail2} = __LINE__ }
 }, <<END);
+    TAP Version 14
     1..17
     not ok 1 - failme
     #   Failed test 'failme'
@@ -151,6 +157,7 @@ test_subtest_in_todo("1fail, 1pass", sub {
     ok 0, 'failme'; BEGIN { $line{fail3} = __LINE__ }
     ok 1, 'passme';
 }, <<END);
+    TAP Version 14
     not ok 1 - failme
     #   Failed test 'failme'
     #   at $0 line $line{fail3}.
@@ -177,6 +184,7 @@ test_subtest_in_todo("todo tests in the subtest", sub {
 
     ok 0, 'inner test 3';             BEGIN{ $line{in3} = __LINE__ }
 }, <<END);
+    TAP Version 14
     not ok 1 - inner test 1
     #   Failed test 'inner test 1'
     #   at $0 line $line{in1}.

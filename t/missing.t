@@ -37,7 +37,7 @@ ok(1, '1 2 3');
 
 END {
     My::Test::is($$out, <<OUT);
-TAP Version 13
+TAP Version 14
 1..5
 ok 1 - Foo
 not ok 2 - Bar

@@ -17,7 +17,7 @@ use Test::More;
     $tb->_ending;
 
     is $tb->read, <<OUT;
-TAP Version 13
+TAP Version 14
 ok 1
 1..1
 OUT
@@ -32,32 +32,12 @@ OUT
     $tb->ok(1);
 
     is $tb->read, <<OUT;
-TAP Version 13
+TAP Version 14
 1..1
 ok 1
 OUT
 }
 
-
-# subtest with no previous tests
-{
-    my $tb = Test::Builder::NoOutput->create;
-    $tb->subtest( "first subtest" => sub {
-        my $child = $tb->{Child};
-        $child->ok(1);
-        $child->plan( "no_plan" );
-    });
-    $tb->done_testing(1);
-
-    is $tb->read, <<OUT;
-TAP Version 13
-    TAP Version 13
-    ok 1
-    1..1
-ok 1 - first subtest
-1..1
-OUT
-}
 
 
 # no headers == no version

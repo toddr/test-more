@@ -36,7 +36,7 @@ my $Test = Test::Builder->new;
     $tb->_ending;
 
     $Test->is_eq($tb->read('out'), <<OUT);
-TAP Version 13
+TAP Version 14
 1..5
 ok 1 - passing
 ok 2 - passing still

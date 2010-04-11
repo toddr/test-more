@@ -32,7 +32,7 @@ exit 250;
 
 END {
     $TB->is_eq($out->read, <<OUT);
-TAP Version 13
+TAP Version 14
 1..1
 OUT
 

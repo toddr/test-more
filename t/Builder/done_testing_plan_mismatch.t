@@ -35,7 +35,7 @@ my $Test = Test::Builder->new;
 $Test->plan( tests => 1 );
 $Test->level(0);
 $Test->is_eq($tb->read, <<"END");
-TAP Version 13
+TAP Version 14
 1..3
 ok 1
 ok 2

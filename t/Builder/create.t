@@ -30,7 +30,7 @@ is $more_tb, Test::Builder->new,  '       does not interfere with ->new';
     $new_tb->ok(1, "a test");
 
     is $new_tb->read, <<'OUT';
-TAP Version 13
+TAP Version 14
 1..1
 ok 1 - a test
 OUT

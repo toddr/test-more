@@ -40,7 +40,7 @@ Test::More->import(tests => 1);
     eval q{ like( "foo", qr/that/, 'is foo like that' ); };
 
     $TB->is_eq($out->read, <<OUT, 'failing output');
-TAP Version 13
+TAP Version 14
 1..1
 not ok 1 - is foo like that
 OUT

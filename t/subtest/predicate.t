@@ -40,6 +40,7 @@ sub foobar_ok ($;$) {
     };
 }
 {
+    test_out("    TAP Version 14");
     test_out("    1..2");
     test_out("    ok 1 - foo");
     test_out("    not ok 2 - bar");
@@ -64,6 +65,7 @@ sub foobar_ok_2 ($;$) {
     foobar_ok($value, $name);
 }
 {
+    test_out("    TAP Version 14");
     test_out("    1..2");
     test_out("    ok 1 - foo");
     test_out("    not ok 2 - bar");
@@ -93,6 +95,7 @@ sub barfoo_ok ($;$) {
     });
 }
 {
+    test_out("    TAP Version 14");
     test_out("    1..2");
     test_out("    ok 1 - foo");
     test_out("    not ok 2 - bar");
@@ -117,6 +120,7 @@ sub barfoo_ok_2 ($;$) {
     barfoo_ok($value, $name);
 }
 {
+    test_out("    TAP Version 14");
     test_out("    1..2");
     test_out("    ok 1 - foo");
     test_out("    not ok 2 - bar");
@@ -134,8 +138,10 @@ sub barfoo_ok_2 ($;$) {
 
 # A subtest-based predicate called from within a subtest
 {
+    test_out("    TAP Version 14");
     test_out("    1..2");
     test_out("    ok 1 - this passes");
+    test_out("        TAP Version 14");
     test_out("        1..2");
     test_out("        ok 1 - foo");
     test_out("        not ok 2 - bar");
