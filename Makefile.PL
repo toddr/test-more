@@ -76,7 +76,9 @@ WriteMakefile(
         TESTS           => 't/*.t t/*/*.t',
     },
 
-    ($mm_ver <= 6.45 ? () : (META_MERGE => {
+    ($mm_ver < 6.48 ? () : (MIN_PERL_VERSION => 5.006)),
+
+    ($mm_ver < 6.46 ? () : (META_MERGE => {
         resources => {
             license     =>      'http://dev.perl.org/licenses/',
             homepage    =>      'http://test-more.googlecode.com',
@@ -115,14 +117,12 @@ MAKE
 
         my @perls = qw(
             perl5.8.9
-            perl5.8.8
             perl5.6.2
-            perl5.6.1
         );
 
         for my $perl (@perls) {
             $make .= sprintf <<'END', $perl;
-	cd $(DISTVNAME) && $(MAKE) clean && %s Makefile.PL && $(MAKE) test $(PASTHRU)
+	cd $(DISTVNAME) && $(MAKE) clean && %s Makefile.PL && PERL_RELEASING=0 $(MAKE) test $(PASTHRU)
 END
         }
 

@@ -15,7 +15,7 @@ use warnings;
 
 use Test::Builder::NoOutput;
 
-use Test::More tests => 23;
+use Test::More tests => 19;
 
 # Formatting may change if we're running under Test::Harness.
 $ENV{HARNESS_ACTIVE} = 0;
@@ -29,7 +29,7 @@ $ENV{HARNESS_ACTIVE} = 0;
         $tb->diag("We ran $_");
     }
     {
-        my $indented = $tb->new_child;
+        my $indented = $tb->child;
         $indented->plan('no_plan');
         $indented->ok( 1, "We're on 1" );
         $indented->ok( 1, "We're on 2" );
@@ -42,7 +42,7 @@ $ENV{HARNESS_ACTIVE} = 0;
 
     $tb->reset_outputs;
     is $tb->read, <<"END", 'Output should nest properly';
-TAP Version 13
+TAP Version 14
 1..7
 ok 1 - We're on 1
 # We ran 1
@@ -50,7 +50,7 @@ ok 2 - We're on 2
 # We ran 2
 ok 3 - We're on 3
 # We ran 3
-    TAP Version 13
+    TAP Version 14
     ok 1 - We're on 1
     ok 2 - We're on 2
     ok 3 - We're on 3
@@ -70,11 +70,11 @@ END
         $tb->diag("We ran $_");
     }
     {
-        my $indented = $tb->new_child;
+        my $indented = $tb->child;
         $indented->plan('no_plan');
         $indented->ok( 1, "We're on 1" );
         {
-            my $indented2 = $indented->new_child('with name');
+            my $indented2 = $indented->child('with name');
             $indented2->plan( tests => 2 );
             $indented2->ok( 1, "We're on 2.1" );
             $indented2->ok( 1, "We're on 2.1" );
@@ -90,12 +90,12 @@ END
     $tb->_ending;
     $tb->reset_outputs;
     is $tb->read, <<"END", 'We should allow arbitrary nesting';
-TAP Version 13
+TAP Version 14
 ok 1 - We're on 1
 # We ran 1
-    TAP Version 13
+    TAP Version 14
     ok 1 - We're on 1
-        TAP Version 13
+        TAP Version 14
         1..2
         ok 1 - We're on 2.1
         ok 2 - We're on 2.1
@@ -113,38 +113,36 @@ END
     my $tb = Test::Builder::NoOutput->create;
 
     {
-        $tb->subtest('expected to fail' => sub {
-            my $child = $tb->{Child};
-            $child->level(3);
-            $child->plan( tests => 3 );
-            $child->ok(1);
-            $child->ok(0);
-            $child->ok(3);
-        });
+        my $child = $tb->child('expected to fail');
+        $child->plan( tests => 3 );
+        $child->ok(1);
+        $child->ok(0);
+        $child->ok(3);
+        $child->finalize;
+    }
 
-        $tb->subtest('expected to pass' => sub {
-            my $child = $tb->{Child};
-            $child->level(3);
-            $child->plan( tests => 3 );
-            $child->ok(1);
-            $child->ok(2);
-            $child->ok(3);
-        });
+    {
+        my $child = $tb->child('expected to pass');
+        $child->plan( tests => 3 );
+        $child->ok(1);
+        $child->ok(2);
+        $child->ok(3);
+        $child->finalize;
     }
     $tb->reset_outputs;
     is $tb->read, <<"END", 'Previous child failures should not force subsequent failures';
-TAP Version 13
-    TAP Version 13
+TAP Version 14
+    TAP Version 14
     1..3
     ok 1
     not ok 2
-    #   Failed test at $0 line 123.
+    #   Failed test at $0 line 119.
     ok 3
     # Looks like you failed 1 test of 3.
 not ok 1 - expected to fail
 #   Failed test 'expected to fail'
-#   at $0 line 123.
-    TAP Version 13
+#   at $0 line 121.
+    TAP Version 14
     1..3
     ok 1
     ok 2
@@ -154,14 +152,14 @@ END
 }
 {
     my $tb    = Test::Builder::NoOutput->create;
-    my $child = $tb->new_child('one');
+    my $child = $tb->child('one');
     is $child->{$_}, $tb->{$_}, "The child should copy the ($_) filehandle"
         foreach qw{Out_FH Todo_FH Fail_FH};
     $child->finalize;
 }
 {
     my $tb    = Test::Builder::NoOutput->create;
-    my $child = $tb->new_child('one');
+    my $child = $tb->child('one');
     can_ok $child, 'parent';
     is $child->parent, $tb, '... and it should return the parent of the child';
     ok !defined $tb->parent, '... but top level builders should not have parents';
@@ -170,32 +168,16 @@ END
     is $tb->name, $0, 'The top level name should be $0';
     is $child->name, 'one', '... but child names should be whatever we set them to';
     $child->finalize;
-    $child = $tb->new_child;
+    $child = $tb->child;
     is $child->name, 'Child of '.$tb->name, '... or at least have a sensible default';
     $child->finalize;
-}
-{
-    ok defined &subtest, 'subtest() should be exported to our namespace';
-    is prototype('subtest'), '$&', '... with the appropriate prototype';
-
-    subtest 'subtest with plan', sub {
-        plan tests => 2;
-        ok 1, 'planned subtests should work';
-        ok 1, '... and support more than one test';
-    };
-    subtest 'subtest without plan', sub {
-        plan 'no_plan';
-        ok 1, 'no_plan subtests should work';
-        ok 1, '... and support more than one test';
-        ok 1, '... no matter how many tests are run';
-    };
 }
 # Skip all subtests
 {
     my $tb = Test::Builder::NoOutput->create;
 
     {
-        my $child = $tb->new_child('skippy says he loves you');
+        my $child = $tb->child('skippy says he loves you');
         eval { $child->plan( skip_all => 'cuz I said so' ) };
         ok my $error = $@, 'A child which does a "skip_all" should throw an exception';
         isa_ok $error, 'Test::Builder::Exception', '... and the exception it throws';
@@ -213,7 +195,7 @@ END
 #line 204
     my $tb = Test::Builder::NoOutput->create;
     $tb->plan( tests => 1 );
-    my $child = $tb->new_child;
+    my $child = $tb->child;
     $child->plan( tests => 1 );
     $child->todo_start( 'message' );
     $child->ok( 0 );
@@ -222,9 +204,9 @@ END
     $tb->_ending;
     $tb->reset_outputs;
     is $tb->read, <<"END", 'TODO tests should not make the parent test fail';
-TAP Version 13
+TAP Version 14
 1..1
-    TAP Version 13
+    TAP Version 14
     1..1
     not ok 1 # TODO message
     #   Failed (TODO) test at $0 line 209.
@@ -234,12 +216,12 @@ END
 {
     my $tb = Test::Builder::NoOutput->create;
     $tb->plan( tests => 1 );
-    my $child = $tb->new_child;
+    my $child = $tb->child;
     $child->finalize;
     $tb->_ending;
     $tb->reset_outputs;
     my $expected = <<"END";
-TAP Version 13
+TAP Version 14
 1..1
 not ok 1 - No tests run for subtest "Child of $0"
 END

@@ -4,8 +4,9 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = '0.92';
+our $VERSION = '0.95_01';
 $VERSION = eval $VERSION;    ## no critic (BuiltinFunctions::ProhibitStringyEval)
+our $TAP_VERSION = 14;
 
 BEGIN {
     if( $] < 5.008 ) {
@@ -23,7 +24,7 @@ BEGIN {
         require threads::shared;
 
         # Hack around YET ANOTHER threads::shared bug.  It would
-        # occassionally forget the contents of the variable when sharing it.
+        # occasionally forget the contents of the variable when sharing it.
         # So we first copy the data, then share, then put our copy back.
         *share = sub (\[$@%]) {
             my $type = ref $_[0];
@@ -90,7 +91,7 @@ Test::Builder - Backend for building test libraries
 =head1 DESCRIPTION
 
 Test::Simple and Test::More have proven to be popular testing modules,
-but they're not always flexible enough.  Test::Builder provides the a
+but they're not always flexible enough.  Test::Builder provides a
 building block upon which to write your own test libraries I<which can
 work together>.
 
@@ -147,16 +148,16 @@ sub create {
     return $self;
 }
 
-=item B<new_child>
+=item B<child>
 
-  my $child = $builder->new_child($name_of_child);
+  my $child = $builder->child($name_of_child);
   $child->plan( tests => 4 );
   $child->ok(some_code());
   ...
   $child->finalize;
 
 Returns a new instance of C<Test::Builder>.  Any output from this child will
-indented four spaces more than the parent's indentation.  When done, the
+be indented four spaces more than the parent's indentation.  When done, the
 C<finalize> method I<must> be called explicitly.
 
 Trying to create a new child with a previous child still active (i.e.,
@@ -167,28 +168,37 @@ the test suite to fail.
 
 =cut
 
-sub new_child {
+sub child {
     my( $self, $name ) = @_;
 
-    if( my $child = $self->child ) {
-        my $name = $child->name;
-        $self->croak("You already have a child named ($name) running");
+    if( $self->{Child_Name} ) {
+        $self->croak("You already have a child named ($self->{Child_Name}) running");
     }
+
+    my $parent_in_todo = $self->in_todo;
+
+    # Clear $TODO for the child.
+    my $orig_TODO = $self->find_TODO(undef, 1, undef);
 
     my $child = bless {}, ref $self;
     $child->reset;
 
     # Add to our indentation
     $child->_indent( $self->_indent . '    ' );
+    
     $child->{$_} = $self->{$_} foreach qw{Out_FH Todo_FH Fail_FH};
+    if ($parent_in_todo) {
+        $child->{Fail_FH} = $self->{Todo_FH};
+    }
 
     # This will be reset in finalize. We do this here lest one child failure
     # cause all children to fail.
     $child->{Child_Error} = $?;
     $?                    = 0;
-    $child->{Name}        = $name || "Child of " . $self->name;
     $child->{Parent}      = $self;
-    $self->{Child}        = $child;   # XXX note the circular reference!
+    $child->{Parent_TODO} = $orig_TODO;
+    $child->{Name}        = $name || "Child of " . $self->name;
+    $self->{Child_Name}   = $child->name;
     return $child;
 }
 
@@ -209,20 +219,82 @@ sub subtest {
         $self->croak("subtest()'s second argument must be a code ref");
     }
 
-    my $child = $self->new_child($name);
-    local $Test::Builder::Test = $child;
+    # Turn the child into the parent so anyone who has stored a copy of
+    # the Test::Builder singleton will get the child.
+    my($error, $child, %parent);
+    {
+        # child() calls reset() which sets $Level to 1, so we localize
+        # $Level first to limit the scope of the reset to the subtest.
+        local $Test::Builder::Level = $Test::Builder::Level + 1;
 
-    $self->_print_tap_version;
+        $child  = $self->child($name);
+        %parent = %$self;
+        %$self  = %$child;
+        $self->_print_tap_version;
 
-    $self->{In_Subtest} = 1;
-    unless( eval { $subtests->(); 1 } ) {
-        my $error = $@;
-        $self->{In_Subtest} = 0;
-        die $error unless eval { $error->isa('Test::Builder::Exception') };
+        my $run_the_subtests = sub {
+            $subtests->();
+            $self->done_testing unless $self->_plan_handled;
+            1;
+        };
+
+        if( !eval { $run_the_subtests->() } ) {
+            $error = $@;
+        }
     }
-    $self->{In_Subtest} = 0;
 
+    # Restore the parent and the copied child.
+    %$child = %$self;
+    %$self = %parent;
+
+    # Restore the parent's $TODO
+    $self->find_TODO(undef, 1, $child->{Parent_TODO});
+
+    # Die *after* we restore the parent.
+    die $error if $error and !eval { $error->isa('Test::Builder::Exception') };
+
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
     return $child->finalize;
+}
+
+=item B<tap_version>
+
+    my $version = $builder->tap_version;
+
+Returns the current version of TAP C<Test::Builder> outputs.
+
+=cut
+
+sub tap_version { $TAP_VERSION }
+
+=begin _private
+
+=item B<_plan_handled>
+
+    if ( $Test->_plan_handled ) { ... }
+
+Returns true if the developer has explicitly handled the plan via:
+
+=over 4
+
+=item * Explicitly setting the number of tests
+
+=item * Setting 'no_plan'
+
+=item * Set 'skip_all'.
+
+=back
+
+This is currently used in subtests when we implicitly call C<< $Test->done_testing >>
+if the developer has not set a plan.
+
+=end _private
+
+=cut
+
+sub _plan_handled {
+    my $self = shift;
+    return $self->{Have_Plan} || $self->{No_Plan} || $self->{Skip_All};
 }
 
 
@@ -249,17 +321,17 @@ sub finalize {
     my $self = shift;
 
     return unless $self->parent;
-    if( my $child = $self->child ) {
-        my $name = $child->name;
-        $self->croak("Can't call finalize() with child ($name) active");
+    if( $self->{Child_Name} ) {
+        $self->croak("Can't call finalize() with child ($self->{Child_Name}) active");
     }
     $self->_ending;
 
     # XXX This will only be necessary for TAP envelopes (we think)
     #$self->_print( $self->is_passing ? "PASS\n" : "FAIL\n" );
 
+    local $Test::Builder::Level = $Test::Builder::Level + 1;
     my $ok = 1;
-    $self->parent->{Child} = undef;
+    $self->parent->{Child_Name} = undef;
     if ( $self->{Skip_All} ) {
         $self->parent->skip($self->{Skip_All});
     }
@@ -270,7 +342,7 @@ sub finalize {
         $self->parent->ok( $self->is_passing, $self->name );
     }
     $? = $self->{Child_Error};
-    $self->{Parent} = undef;
+    delete $self->{Parent};
 
     return $self->is_passing;
 }
@@ -298,32 +370,6 @@ builders for nested TAP.
 
 sub parent { shift->{Parent} }
 
-=item B<child>
-
- if ( my $child = $builder->child ) {
-     ...
- }
-
-Returns the child C<Test::Builder> instance, if any.  Only used with child
-builders for nested TAP.
-
-=cut
-
-sub child { shift->{Child} }
-
-=item B<in_subtest>
-
- if ( $builder->in_subtest ) {
-     ...
- }
-
-Returns a boolean value indicating whether or not a builder is running in a
-subtest.
-
-=cut
-
-sub in_subtest { shift->{In_Subtest} }
-
 =item B<name>
 
  diag $builder->name;
@@ -338,7 +384,7 @@ sub name { shift->{Name} }
 
 sub DESTROY {
     my $self = shift;
-    if ( $self->parent ) {
+    if ( $self->parent and $$ == $self->{Original_Pid} ) {
         my $name = $self->name;
         $self->diag(<<"FAIL");
 Child ($name) exited without calling finalize()
@@ -375,7 +421,7 @@ sub reset {    ## no critic (Subroutines::ProhibitBuiltinHomonyms)
     $self->{Have_Output_Plan} = 0;
 
     $self->{Original_Pid} = $$;
-    $self->{Child}        = undef;
+    $self->{Child_Name}   = undef;
     $self->{Indent}     ||= '';
 
     share( $self->{Curr_Test} );
@@ -481,7 +527,6 @@ sub _plan_tests {
     return;
 }
 
-
 =item B<expected_tests>
 
     my $max = $Test->expected_tests;
@@ -527,7 +572,6 @@ sub no_plan {
     return 1;
 }
 
-
 =begin private
 
 =item B<_output_plan>
@@ -566,6 +610,7 @@ sub _output_plan {
 
     return;
 }
+
 
 =item B<done_testing>
 
@@ -728,11 +773,7 @@ like Test::Simple's C<ok()>.
 sub ok {
     my( $self, $test, $name ) = @_;
 
-    if ( $self->in_subtest ) {
-        $self = $self->child;
-    }
-
-    if ( $self->child and not $self->{In_Destroy} ) {
+    if ( $self->{Child_Name} and not $self->{In_Destroy} ) {
         $name = 'unnamed test' unless defined $name;
         $self->is_passing(0);
         $self->croak("Cannot run test ($name) with active children");
@@ -908,8 +949,6 @@ sub is_eq {
     my( $self, $got, $expect, $name ) = @_;
     local $Level = $Level + 1;
 
-    $self->_unoverload_str( \$got, \$expect );
-
     if( !defined $got || !defined $expect ) {
         # undef only matches undef and nothing else
         my $test = !defined $got && !defined $expect;
@@ -925,8 +964,6 @@ sub is_eq {
 sub is_num {
     my( $self, $got, $expect, $name ) = @_;
     local $Level = $Level + 1;
-
-    $self->_unoverload_num( \$got, \$expect );
 
     if( !defined $got || !defined $expect ) {
         # undef only matches undef and nothing else
@@ -1040,8 +1077,6 @@ sub isnt_num {
 
 Like Test::More's C<like()>.  Checks if $this matches the given C<$regex>.
 
-You'll want to avoid C<qr//> if you want your tests to work before 5.005.
-
 =item B<unlike>
 
   $Test->unlike($this, qr/$regex/, $name);
@@ -1090,8 +1125,9 @@ sub cmp_ok {
 
         my($pack, $file, $line) = $self->caller();
 
+        # This is so that warnings come out at the caller's level
         $test = eval qq[
-#line 1 "cmp_ok [from $file line $line]"
+#line $line "(eval in cmp_ok) $file"
 \$got $type \$expect;
 ];
         $error = $@;
@@ -1298,8 +1334,11 @@ These methods are useful when writing your own test methods.
   $Test->maybe_regex(qr/$regex/);
   $Test->maybe_regex('/$regex/');
 
+This method used to be useful back when Test::Builder worked on Perls
+before 5.6 which didn't have qr//.  Now its pretty useless.
+
 Convenience method for building testing functions that take regular
-expressions as arguments, but need to work before perl 5.005.
+expressions as arguments.
 
 Takes a quoted regular expression produced by C<qr//>, or a string
 representing a regular expression.
@@ -1368,15 +1407,11 @@ sub _regex_ok {
         ## no critic (BuiltinFunctions::ProhibitStringyEval)
 
         my $test;
-        my $code = $self->_caller_context;
+        my $context = $self->_caller_context;
 
         local( $@, $!, $SIG{__DIE__} );    # isolate eval
 
-        # Yes, it has to look like this or 5.4.5 won't see the #line
-        # directive.
-        # Don't ask me, man, I just work here.
-        $test = eval "
-$code" . q{$test = $this =~ /$usable_regex/ ? 1 : 0};
+        $test = eval $context . q{$test = $this =~ /$usable_regex/ ? 1 : 0};
 
         $test = !$test if $cmp eq '!~';
 
@@ -1458,8 +1493,7 @@ sub is_fh {
     return 1 if ref \$maybe_fh eq 'GLOB';    # its a glob
 
     return eval { $maybe_fh->isa("IO::Handle") } ||
-           # 5.5.4's tied() and can() doesn't like getting undef
-           eval { ( tied($maybe_fh) || '' )->can('TIEHANDLE') };
+           eval { tied($maybe_fh)->can('TIEHANDLE') };
 }
 
 =back
@@ -1614,8 +1648,6 @@ Mark Fowler <mark@twoshortplanks.com>
 sub diag {
     my $self = shift;
 
-    $self = $self->child if $self->in_subtest;
-
     $self->_print_comment( $self->_diag_fh, @_ );
 }
 
@@ -1720,17 +1752,18 @@ sub _print_to_fh {
     return if $^C;
 
     my $msg = join '', @msgs;
+    my $indent = $self->_indent;
 
     local( $\, $", $, ) = ( undef, ' ', '' );
 
     # Escape each line after the first with a # so we don't
     # confuse Test::Harness.
-    $msg =~ s{\n(?!\z)}{\n# }sg;
+    $msg =~ s{\n(?!\z)}{\n$indent# }sg;
 
     # Stick a newline on the end if it needs it.
     $msg .= "\n" unless $msg =~ /\n\z/;
 
-    return print $fh $self->_indent, $msg;
+    return print $fh $indent, $msg;
 }
 
 
@@ -1739,7 +1772,7 @@ sub _print_tap_version {
 
     return if $self->no_header;
     return if $self->{printed_tap_version}++;
-    $self->_print("TAP Version 13");
+    $self->_print("TAP Version $TAP_VERSION");
 }
 
 
@@ -2136,21 +2169,28 @@ sub todo {
 =item B<find_TODO>
 
     my $todo_reason = $Test->find_TODO();
-    my $todo_reason = $Test->find_TODO($pack):
+    my $todo_reason = $Test->find_TODO($pack);
 
 Like C<todo()> but only returns the value of C<$TODO> ignoring
 C<todo_start()>.
 
+Can also be used to set C<$TODO> to a new value while returning the
+old value:
+
+    my $old_reason = $Test->find_TODO($pack, 1, $new_reason);
+
 =cut
 
 sub find_TODO {
-    my( $self, $pack ) = @_;
+    my( $self, $pack, $set, $new_value ) = @_;
 
     $pack = $pack || $self->caller(1) || $self->exported_to;
     return unless $pack;
 
     no strict 'refs';    ## no critic
-    return ${ $pack . '::TODO' };
+    my $old_value = ${ $pack . '::TODO' };
+    $set and ${ $pack . '::TODO' } = $new_value;
+    return $old_value;
 }
 
 =item B<in_todo>
@@ -2347,10 +2387,10 @@ WHOA
 
   _my_exit($exit_num);
 
-Perl seems to have some trouble with exiting inside an C<END> block.  5.005_03
-and 5.6.1 both seem to do odd things.  Instead, this function edits C<$?>
-directly.  It should B<only> be called from inside an C<END> block.  It
-doesn't actually exit, that's your job.
+Perl seems to have some trouble with exiting inside an C<END> block.
+5.6.1 does some odd things.  Instead, this function edits C<$?>
+directly.  It should B<only> be called from inside an C<END> block.
+It doesn't actually exit, that's your job.
 
 =cut
 
@@ -2515,7 +2555,7 @@ Test::Builder.
 
 =head1 MEMORY
 
-An informative hash, accessable via C<<details()>>, is stored for each
+An informative hash, accessible via C<<details()>>, is stored for each
 test you perform.  So memory usage will scale linearly with each test
 run. Although this is not a problem for most test suites, it can
 become an issue if you do large (hundred thousands to million)
