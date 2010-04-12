@@ -171,6 +171,7 @@ the test suite to fail.
 sub child {
     my( $self, $name ) = @_;
 
+    $self->_print_tap_version;
     if( $self->{Child_Name} ) {
         $self->croak("You already have a child named ($self->{Child_Name}) running");
     }
