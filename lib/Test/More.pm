@@ -786,6 +786,7 @@ C<use_ok> and C<require_ok>.
 
    BEGIN { use_ok($module); }
    BEGIN { use_ok($module, @imports); }
+   BEGIN { use_ok($module, undef); }
 
 These simply use the given $module and test to make sure the load
 happened ok.  It's recommended that you run use_ok() inside a BEGIN
@@ -804,6 +805,11 @@ Version numbers can be checked like so:
 
    # Just like "use Some::Module 1.02"
    BEGIN { use_ok('Some::Module', 1.02) }
+
+If you want to block exports on the module you're importing, do this:
+
+   # Just like "use Some::Module ()"
+   BEGIN { use_ok('Some::Module', undef) }
 
 Don't try to do this:
 
@@ -838,8 +844,13 @@ package $pack;
 use $module $imports[0];
 1;
 USE
-    }
-    else {
+    } elsif(@imports == 1 and !defined $imports[0]) {
+        $code = <<USE;
+package $pack;
+use $module ();
+1;
+USE
+    } else {
         $code = <<USE;
 package $pack;
 use $module \@{\$args[0]};
